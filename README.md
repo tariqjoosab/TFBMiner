@@ -1,10 +1,10 @@
 # TFBMiner [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 A data acquisition and analysis pipeline for the rapid identification of putative transcription factor-based biosensors.
 ## Description
-This pipeline has two main stages: 1) enzymatic chain identification, and 2) chain processing.
+TFBMiner has two main stages: 1) enzymatic chain identification, and 2) chain processing.
 
 ### Enzymatic chain identification
-The pipeline initially receives the KEGG COMPOUND database ID of a compound of interest (denoted C1) and uses the KEGG REST API to retrieve data regarding which reactions C1 is involved in. Subsequently, reactions that catabolize the compound are identified, and the IDs of each product (C2) are used to identify reactions that catabolize C2. Enzymes that catalyse the initial reactions are linked to enzymes that catalyse the subsequent reactions to form chains that sequentially processes C1. This process continues until chains reach the maximum chain length, which is set by the user. Each chain will be output to the console, keeping the user updated during this stage.
+TFBMiner initially receives the KEGG COMPOUND database ID of a compound of interest (denoted C1) and uses the KEGG REST API to retrieve data regarding which reactions C1 is involved in. Subsequently, reactions that catabolize the compound are identified, and the IDs of each product (C2) are used to identify reactions that catabolize C2. Enzymes that catalyse the initial reactions are linked to enzymes that catalyse the subsequent reactions to form chains that sequentially processes C1. This process continues until chains reach the maximum chain length, which is set by the user. Each chain will be output to the console, keeping the user updated during this stage.
 
 ### Chain processing
 Each enzymatic chain is processed to identify putative transcriptional regulators of C1 degradation.  This begins by determining whether any genes that encode enzymes within the chain have genetic organisations that are characteristic of a catabolic operon. The KEGG REST API is used to retrieve lists of genes that encode each enzyme within the chain and the organisms that possess them, and this data is filtered to leave only organisms that possess all of the enzymes. 
@@ -13,7 +13,7 @@ Data for each chain is then output to a csv file within a directory named chainl
 
 ## Usage
 ```sh
-TFBMiner.py [-h] [compound] [-l length]
+TFBMiner [-h] [compound] [-l length]
 ```
 
 ## Options
