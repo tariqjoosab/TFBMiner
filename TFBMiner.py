@@ -228,7 +228,6 @@ def chain_former(reactions, inducer, max_chain_length):
                                                 all_chains.append(chain)
                                                 print(f"Chain identified: {' => '.join(e for e in chain)} ")
 
-                                        
                                         if max_chain_length > 2:
                                             for product_2 in products_2:
                                                 # Retrieves the reactions that a useful 
