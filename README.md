@@ -1,4 +1,6 @@
-# TFBMiner [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+# TFBMiner
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A data acquisition and analysis pipeline for the rapid identification of putative transcription factor-based biosensors.
 ## Description
 
