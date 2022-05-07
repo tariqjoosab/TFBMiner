@@ -1,5 +1,5 @@
 # TFBMiner
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 
 A data acquisition and analysis pipeline for the rapid identification of putative transcription factor-based biosensors.
 ## Description
@@ -57,3 +57,6 @@ However, it is recommended to use up-to-date versions. Bacterial feature table g
 
 ## Author
 Tariq Joosab.
+
+## Credits
+Research supervisors: Dr Erik Hanko & Prof Rainer Breitling.
