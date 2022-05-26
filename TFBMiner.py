@@ -36,14 +36,14 @@ def get_data(search_term):
     URL = "http://rest.kegg.jp/get/%s"
     
     try:
-        # Constructs a querystring for the RESTful URL and uses it to
-        # retrieve HTML data for the relevant KEGG database entry.
+        # Constructs a querystring for the RESTful URL for
+        # retrieving HTML data from the relevant KEGG database entry.
         search = urlopen(URL % search_term)
         search = io.TextIOWrapper(search, encoding="UTF-8").read()
         return search
     
     except HTTPError:
-        # If access is temporarily blocked, it tries again after 10s
+        # Tries again after 10s if access is blocked.
         # This prevents the program from overloading the RESTful API.
         time.sleep(10)
         try:
@@ -57,7 +57,10 @@ def get_data(search_term):
 
 def identify_reactions(compound):
     
-    """Extracts all reactions that a compound is involved in from its KEGG COMPOUND database entry."""
+    """
+    Extracts the KEGG IDs of all reactions that a compound is 
+    involved in from its KEGG COMPOUND database entry.
+    """
 
     # Removes compound coefficients.
     if " " in compound:
@@ -70,13 +73,13 @@ def identify_reactions(compound):
         return []
     else:
         try:
-            # HTML data is read line by line.
+            # Retrieved HTML data is read line by line.
             current_section = None
             for line in search.rstrip().split("\n"):
                 section = line[:12].strip()
                 if not section == "":
                     current_section = section
-                    # Finds the section where reactions are listed
+                    # Finds section where reactions are listed
                     # and extracts their IDs from each line.
                     if current_section == "REACTION":
                         index = search.rstrip().split("\n").index(line)
@@ -90,7 +93,8 @@ def identify_reactions(compound):
                             reactions.extend(reactions_)
 
             # Eliminates erroneous IDs resulting from whitespaces.
-            reactions = [reaction for reaction in reactions if reaction != ""]
+            reactions = ['rn:' + reaction for reaction in reactions if reaction != ""]
+            
             return reactions
 
         except UnboundLocalError:
@@ -99,18 +103,18 @@ def identify_reactions(compound):
 
 def investigate_reaction(reaction):
     
-    """Identifies all components of a reaction from its KEGG REACTION database entry"""
+    """
+    Identifies the EC numbers of the enzymes that catalyse a reaction, along with
+    the KEGG IDs of the reactants and products, from its KEGG REACTION database entry.
+    """
 
-    # Retrieves HTML data from the reaction's KEGG database entry
-    search_term = "rn:" + str(reaction)
-    search = get_data(search_term)
+    # Retrieves HTML data from the reaction's KEGG database entry.
+    search = get_data(reaction)
     if search is None:
         return (None,)*3
-
-    # If HTML data was retrieved, it is read 
-    # line by line to find specific information.
     else:
         try:
+            # Retrieved HTML data is read line by line.
             current_section = None
             for line in search.rstrip().split("\n"):
                 section = line[:12].strip()
@@ -142,9 +146,9 @@ def investigate_reaction(reaction):
                     if current_section == "ENZYME":
                         if " " in line[12:]:
                             enzymes = line[12:].split(" ")
-                            enzymes = [enzyme for enzyme in enzymes if enzyme != ""]
+                            enzymes = ['EC:' + enzyme for enzyme in enzymes if enzyme != ""]
                         else:
-                            enzymes = [line[12:]]
+                            enzymes = ["EC:" + line[12:]]
 
             return enzymes, reactants, products
 
@@ -154,7 +158,7 @@ def investigate_reaction(reaction):
 
 def chain_former(reactions, inducer, max_chain_length):
     
-    """Forms chains of enzymatic reactions that successively catabolize an inducer compound."""
+    """Generates linear chains of enzymes that sequentially catabolize an inducer compound."""
 
     products_info = {}
     reactions_info = {}
@@ -167,11 +171,18 @@ def chain_former(reactions, inducer, max_chain_length):
     "C00024", "C00002", "C00003", "C00008", "C00009", 
     "C00011", "C00012", "C00013", "C00014", "C00019"
     ]
-    
-    for reaction in reactions:
 
-        # Retrieves and the components of a 
-        # reaction that the inducer is involved in.
+
+    def link_reactions(reaction, compound, recursion_depth=0, prior_chains=None, prior_enzymes=None, limit=max_chain_length):
+
+        """
+        Uses recursion to identify whether a reaction catabolizes a product of a reaction that 
+        preceded it. Enzymes that catalyse these reactions are individually linked to generate 
+        linear enzymatic chains. This process continues until chains meet the maximum chain length.
+        """
+    
+        # Retrieves and/or stores the details of a 
+        # reaction that a compound is involved in.
         if reaction not in reactions_info:
             enzymes, reactants, products = investigate_reaction(reaction)
             reaction_info = [enzymes, reactants, products]
@@ -182,13 +193,37 @@ def chain_former(reactions, inducer, max_chain_length):
             reactants = reaction_info[1]
             products = reaction_info[2]
 
-        # Reactions that catabolize the inducer
-        # are then processed further.
         if None not in reaction_info:
-            if inducer in reactants:
+            starting_compound = compound
+            # Reactions that catabolize the compound are processed.
+            if starting_compound in reactants:
+                    
+                # Creates enzymatic chains by linking enzymes that catalyse the
+                # reaction at the current depth to enzymes from the previous depth. 
+                if (recursion_depth == 1) and (prior_enzymes is not None):
+                    chains_ = [[enzyme_1, enzyme_2]
+                                for enzyme_1 in prior_enzymes
+                                if '-' not in enzyme_1
+                                for enzyme_2 in enzymes
+                                if '-' not in enzyme_2] 
+                
+                # Extends enzymatic chains from the previous depth.
+                elif (recursion_depth > 1) and (prior_chains is not None):
+                    extended_chains = [chain + [e] for e in enzymes for chain in prior_chains if '-' not in e]
+                    chains_ = extended_chains
+                    
+                else:
+                    chains_ = None
+                
+                # Chains at the current depth are output to terminal.
+                if chains_ is not None:
+                    for chain_ in chains_:
+                        all_chains.append(chain_)
+                        print(f"Chain identified: {' => '.join(e for e in chain_)} ")
+                
+                # Retrieves and/or stores the subsequent reactions 
+                # that each product is involved in.
                 for product in products:
-
-                    # Retrieves the reactions a useful product is involved in. 
                     if product not in excluded_compounds:
                         if product not in products_info:
                             reactions_2 = identify_reactions(product)
@@ -196,127 +231,28 @@ def chain_former(reactions, inducer, max_chain_length):
                         else:
                             reactions_2 = products_info[product]
 
+                        # Recursively either forms or extends chains based upon recursion depth.
                         if len(reactions_2) < 100:
                             for reaction_2 in reactions_2:
-                                # Retrieves the components of a 
-                                # reaction that the product is involved in.
-                                if reaction_2 not in reactions_info:
-                                    enzymes_2, reactants_2, products_2 = investigate_reaction(reaction_2)
-                                    reaction_2_info = [enzymes_2, reactants_2, products_2]
-                                    reactions_info[reaction_2] = reaction_2_info
-                                else:
-                                    reaction_2_info = reactions_info[reaction_2]
-                                    enzymes_2 = reaction_2_info[0]
-                                    reactants_2 = reaction_2_info[1]
-                                    products_2 = reaction_2_info[2]
+                                depth = recursion_depth
+                                depth +=1
+                                if depth == 1:
+                                    link_reactions(reaction_2, product, recursion_depth=depth, prior_enzymes=enzymes)
+                                elif (depth > 1) and (depth < limit):
+                                    link_reactions(reaction_2, product, recursion_depth=depth, prior_chains=chains_)
 
-                                # Identifies whether a second-order reaction 
-                                # catabolizes a product of an initial reaction.
-                                if None not in reaction_2_info:
-                                    compound_2 = product
-                                    if compound_2 in reactants_2:
+    for reaction in reactions:
+        link_reactions(reaction, inducer, limit=max_chain_length)
 
-                                        # Each enzyme that catalyses the first reaction is placed 
-                                        # in a chain with each enzyme that catalyses the second reaction.
-                                        chains = [(enzyme, enzyme_2)
-                                                    for enzyme in enzymes
-                                                    for enzyme_2 in enzymes_2]
-
-                                        # Each chain is output to the console to notify the user.
-                                        for chain in chains:
-                                            if any("-" in e for e in chain) == False:
-                                                all_chains.append(chain)
-                                                print(f"Chain identified: {' => '.join(e for e in chain)} ")
-
-                                        if max_chain_length > 2:
-                                            for product_2 in products_2:
-                                                # Retrieves the reactions that a useful 
-                                                # second-order product is involved in.
-                                                if product_2 not in excluded_compounds:    
-                                                    if product_2 not in products_info:
-                                                        reactions_3 = identify_reactions(product_2)
-                                                        products_info[product_2] = reactions_3
-                                                    else:
-                                                        reactions_3 = products_info[product_2]
-
-                                                    if len(reactions_3) < 100:
-                                                        for reaction_3 in reactions_3:
-                                                            # Retrieves the components of a 
-                                                            # reaction that the product is involved in.
-                                                            if reaction_3 not in reactions_info:
-                                                                enzymes_3, reactants_3, products_3 = investigate_reaction(reaction_3) 
-                                                                reaction_3_info = [enzymes_3, reactants_3, products_3]
-                                                                reactions_info[reaction_3] = reaction_3_info
-                                                            else:
-                                                                reaction_3_info = reactions_info[reaction_3]
-                                                                enzymes_3 = reaction_3_info[0]
-                                                                reactants_3 = reaction_3_info[1]
-                                                                products_3 = reaction_3_info[2]
-
-                                                            if None not in reaction_3_info:
-                                                                compound_3 = product_2
-                                                                if compound_3 in reactants_3:
-
-                                                                    # Forms chains of length 3.
-                                                                    chains_2 = [(enzyme, enzyme_2, enzyme_3) 
-                                                                                    for enzyme in enzymes
-                                                                                    for enzyme_2 in enzymes_2
-                                                                                    for enzyme_3 in enzymes_3]
-                                                            
-                                                                    for chain_2 in chains_2:
-                                                                        if any("-" in e for e in chain_2) == False:
-                                                                            all_chains.append(chain_2)
-                                                                            print(f"Chain identified: {' => '.join(e for e in chain_2)} ")
-
-                                                                    if max_chain_length > 3:
-                                                                        for product_3 in products_3:
-                                                                            if product_3 not in excluded_compounds:
-                                                                                
-                                                                                # Retrieves the reactions that a useful 
-                                                                                # third-order product is involved in.
-                                                                                if product_3 not in products_info:
-                                                                                    reactions_4 = identify_reactions(product_3)
-                                                                                    products_info[product_3] = reactions_4
-                                                                                else:
-                                                                                    reactions_4 = products_info[product_3]
-
-                                                                                if len(reactions_4) < 100:
-                                                                                    for reaction_4 in reactions_4:
-                                                                                        
-                                                                                        # Retrieves the components of a reaction 
-                                                                                        # that a third-order product is involved in.
-                                                                                        if reaction_4 not in reactions_info:
-                                                                                            enzymes_4, reactants_4, products_4 = investigate_reaction(reaction_4)
-                                                                                            reaction_4_info = [enzymes_4, reactants_4, products_4] 
-                                                                                            reactions_info[reaction_4] = reaction_4_info
-                                                                                        else:
-                                                                                            reaction_4_info = reactions_info[reaction_4]
-                                                                                            enzymes_4 = reaction_4_info[0]
-                                                                                            reactants_4 = reaction_4_info[1]
-                                                                                            products_4 = reaction_4_info[2]
-
-                                                                                        if None not in reaction_4_info:
-                                                                                            compound_4 = product_3
-                                                                                            if compound_4 in reactants_4:
-                                                                                                
-                                                                                                # Forms chains of length 4.
-                                                                                                chains_3 = [(enzyme, enzyme_2, enzyme_3, enzyme_4)
-                                                                                                                for enzyme in enzymes
-                                                                                                                for enzyme_2 in enzymes_2
-                                                                                                                for enzyme_3 in enzymes_3
-                                                                                                                for enzyme_4 in enzymes_4]
-
-                                                                                                for chain_3 in chains_3:
-                                                                                                    if any("-" in e for e in chain_3) == False:
-                                                                                                        all_chains.append(chain_3)
-                                                                                                        print(f"Chain identified: {' => '.join(e for e in chain_3)} ")
-                                                                                                                       
     return all_chains
 
 
 def form_chains(inducer, max_chain_length):
 
-    """Conducts and optimizes the chain identification procedure."""
+    """
+    Conducts and optimizes the chain identification procedure 
+    by using multiprocessing if appropriate.
+    """
 
     initial_reactions = identify_reactions(inducer)
     num_initial_nodes = len(initial_reactions)
@@ -335,8 +271,8 @@ def form_chains(inducer, max_chain_length):
 
     if processes is not None:
 
-        # Chain processing is conducted simultaneously
-        # if there are enough initial reactions.
+        # Chains are generated in parallel depending
+        # on the total number of initial reactions.
         if processes >= 2:
             initial_reactions = np.array(initial_reactions, dtype=object)
             with concurrent.futures.ProcessPoolExecutor() as executor:
@@ -352,7 +288,7 @@ def form_chains(inducer, max_chain_length):
                         if chain not in chains_all:
                             chains_all.append(chain)
 
-        # Chain processing is not parallelized if
+        # Chains are generated sequentially if
         # there is only one initial reaction.
         else:
             chains_all = []
@@ -371,14 +307,14 @@ def form_chains(inducer, max_chain_length):
 
 def retrieve_genes(chain):
     
-    """Identifies organisms which possess all enzymes within a chain and retrieves their corresponding genes."""
+    """Identifies organisms which possess all enzymes within a chain and retrieves the corresponding genes."""
 
     all_genes = {}
 
     for n in range(len(chain)):
 
         # Data is retrieved from the enzyme's KEGG database entry.
-        enzyme = "ec:" + str(chain[n])
+        enzyme = chain[n].lower()
         search = get_data(enzyme)
 
         # Data is read line by line
@@ -534,7 +470,11 @@ def predict_biosensors(df, genome_assemblies, genome_files):
 
 def identify_regulator(genome, operon, operon_orientation, gene_positions):
     
-    """Identifies putative regulators of predicted operons."""
+    """
+    Identifies putative regulators of predicted operons based upon a conceptual model.
+    Regulatory genes are often situated directly upstream of their corresponding operon
+    and on the opposite DNA strand.
+    """
 
     positions = [gene_positions[gene] for gene in operon]
     
@@ -669,68 +609,21 @@ def process_chain(chain, inducer, genome_assemblies, genome_files):
                 name = inducer + "_" + "_".join(str(col)[3:9] for col in cols[1:]) + ".csv"
                 
                 # Formats the data for csv files.
-                if chain_length == 4:
-
-                    header = ["Organism_code", 
-                                cols[1], 
-                                cols[2], 
-                                cols[3], 
-                                cols[4], 
-                                "Operon", 
-                                "Regulator", 
-                                "Regulator_score", 
-                                "Regulator_annotation"]
-                    
-                    data = [[regulon.organism_code, 
-                                regulon.genes[1], 
-                                regulon.genes[2], 
-                                regulon.genes[3],
-                                regulon.genes[4],
-                                " ".join(str(gene) for gene in regulon.operon),
-                                regulon.regulator,
-                                regulon.regulator_score,
-                                regulon.regulator_annotation] for regulon in regulons]
-
-                if chain_length == 3:
-
-                    header = ["Organism_code", 
-                                cols[1], 
-                                cols[2], 
-                                cols[3], 
-                                "Operon", 
-                                "Regulator", 
-                                "Regulator_score", 
-                                "Regulator_annotation"]
-                    
-                    data = [[regulon.organism_code, 
-                                regulon.genes[1], 
-                                regulon.genes[2], 
-                                regulon.genes[3],
-                                " ".join(str(gene) for gene in regulon.operon),
-                                regulon.regulator,
-                                regulon.regulator_score,
-                                regulon.regulator_annotation] for regulon in regulons]
-
-                if chain_length == 2:
-
-                    header = ["Organism_code", 
-                                cols[1], 
-                                cols[2], 
-                                "Operon", 
-                                "Regulator", 
-                                "Regulator_score", 
-                                "Regulator_annotation"]
-                    
-                    data = [[regulon.organism_code, 
-                                regulon.genes[1], 
-                                regulon.genes[2],
-                                " ".join(str(gene) for gene in regulon.operon),
-                                regulon.regulator,
-                                regulon.regulator_score,
-                                regulon.regulator_annotation] for regulon in regulons]
+                header = ["Organism_code"] + [cols[x] for x in range(1, chain_length+1)] + ["Operon", 
+                            "Regulator", 
+                            "Regulator_score", 
+                            "Regulator_annotation"]
                 
-                # Creates the directories and outputs
-                # the data as csv files.
+                data = [[regulon.organism_code] + 
+                        [regulon.genes[x] for x in range(1, chain_length+1)] +
+                        [" ".join(str(gene) for gene in regulon.operon),
+                        regulon.regulator,
+                        regulon.regulator_score,
+                        regulon.regulator_annotation] 
+                        for regulon in regulons]
+                
+                # Creates directories and outputs
+                # data as .csv files to them.
                 try:
                     path = os.path.join(root, subroot, name)
                     with open(path, "w", encoding="UTF8", newline="") as f:
@@ -758,39 +651,49 @@ def main():
     inducer = args.compound
     max_chain_length = args.length
 
-    if max_chain_length in [2,3,4]:
-        if os.path.isdir("genome_files"):
-            if os.listdir("genome_files"):
-                genome_files = glob.glob("genome_files\*")
-                try:
-                    genome_assemblies = pd.read_csv("genome_assemblies.csv")
-                    genome_assemblies.drop(columns=genome_assemblies.columns[0], 
-                        axis=1, 
-                        inplace=True)
-                except FileNotFoundError:
-                    sys.exit("Error: 'genome_assemblies.csv' was not found within the program directory.")
-                print("{}Identifying enzymatic chains for '{}' with maximum chain length set to {}...{}".format("\n", inducer, max_chain_length, "\n"))
-                chains = form_chains(inducer, max_chain_length)
-                total_chains = len(chains)
-                print("{}{} chains were identified.".format("\n", total_chains))
-                pd.set_option('mode.chained_assignment', None)
-                print("{}Processing {} chains...{}".format("\n", total_chains, "\n"))
-                total_biosensors = 0
-                for n in tqdm(range(total_chains)):
-                    num_regulons = process_chain(chains[n], inducer, genome_assemblies, genome_files)
-                    if num_regulons is not None:
-                        total_biosensors += num_regulons
-                t2 = time.time()
-                if total_biosensors > 0:
-                    print("{}Processing is complete. {} potential biosensors were identified for '{}'. Results have been deposited to '{}_results'. Total runtime: {}s.".format("\n", total_biosensors, inducer, inducer, round(t2-t1, 2)))
-                else:
-                    print("{}Processing is complete. {} potential biosensors were identified for '{}'. Total runtime: {}".format("\n", total_biosensors, inducer, round(t2-t1, 2)))
-            else:
-                sys.exit("Error: 'genome_files' folder is empty.")
+    if max_chain_length < 2:
+        sys.exit("Error: chains cannot be less than 2 enzymes in length.")
+
+    if max_chain_length > 5:
+        i = input("The maximum chain length is recommended to be <= 5 for a manageable runtime. Would you still like to continue? (y/n): ")
+        if i == 'y':
+            pass
         else:
-            sys.exit("Error: 'genome_files' folder was not found within the program directory.")
+            sys.exit("Program closed.")
+
+    if not os.path.isdir("genome_files"):
+        sys.exit("Error: 'genome_files' folder was not found within the program directory.")
+
+    if not os.listdir("genome_files"):
+        sys.exit("Error: 'genome_files' folder is empty.")
+
+    genome_files = glob.glob("genome_files\*")
+    
+    try:
+        genome_assemblies = pd.read_csv("genome_assemblies.csv")
+        genome_assemblies.drop(columns=genome_assemblies.columns[0], 
+            axis=1, 
+            inplace=True)
+    except FileNotFoundError:
+        sys.exit("Error: 'genome_assemblies.csv' was not found within the program directory.")
+    
+    print("{}Identifying enzymatic chains for '{}' with maximum chain length set to {}...{}".format("\n", inducer, max_chain_length, "\n"))
+    chains = form_chains(inducer, max_chain_length)
+    total_chains = len(chains)
+    print("{}{} unique chains were identified.".format("\n", total_chains))
+    pd.set_option('mode.chained_assignment', None)
+    print("{}Processing {} chains...{}".format("\n", total_chains, "\n"))
+    
+    total_biosensors = 0
+    for n in tqdm(range(total_chains)):
+        num_regulons = process_chain(chains[n], inducer, genome_assemblies, genome_files)
+        if num_regulons is not None:
+            total_biosensors += num_regulons
+    t2 = time.time()
+    if total_biosensors > 0:
+        print("{}Processing is complete. {} potential biosensors were identified for '{}'. Results have been deposited to '{}_results'. Total runtime: {}s.".format("\n", total_biosensors, inducer, inducer, round(t2-t1, 2)))
     else:
-        sys.exit("Error: chain length can only be between 2 and 4.")
+        print("{}Processing is complete. {} potential biosensors were identified for '{}'. Total runtime: {}".format("\n", total_biosensors, inducer, round(t2-t1, 2)))
 
 
 if __name__ == "__main__":
