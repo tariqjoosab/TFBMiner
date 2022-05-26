@@ -15,37 +15,29 @@ Each enzymatic chain is processed to identify putative transcriptional regulator
 
 ## Usage
 ```sh
-TFBMiner [-h] [compound] [-l length]
+TFBMiner.py [-h] [-l LENGTH] compound
 ```
 
 ## Options
-```-h, --help``` 
+```-h, --help```: Display the program usage, description, options, and guidance in the terminal.
 
-Display the program usage, description, options, and guidance in the terminal.
+```compound```: Enter the KEGG COMPOUND database ID of the compound to predict TFBs for.
 
-```compound```
-
-Enter the KEGG COMPOUND database ID of the compound to perform computations for.
-
-```-l, --length```
-
-Specify the maximum length of the enzymatic chains. This value can currently range between 2 and 4.
+```-l, --length```: Specify the maximum length of the enzymatic chains.
 
 ## Examples
-
+To predict TFBs for l-arabinose using generated chains up to 3 enzymes in length:
 ```sh 
 TFBMiner.py C00259 -l 3
 ```
 
-Performs computations for l-arabinose. Chains of length 2 and 3 will be identified and processed.
+To predict TFBs for ferulic acid using generated chains up to 5 enzymes in length:
 
 ```sh
-TFBMiner.py C01494 -l 4
+TFBMiner.py C01494 -l 5
 ```
 
-Performs computations for ferulic acid. Chains of length 2, 3, and 4 will be identified and processed.
-
-## Requirements
+## Dependencies
 - numpy (version: 1.21.5)
 - pandas (version: 1.3.5)
 - tqdm (version: 4.62.3)
@@ -58,5 +50,5 @@ However, it is recommended to use up-to-date versions. Bacterial feature table g
 ## Author
 Tariq Joosab.
 
-## Credits
+## Acknowledgements
 Research supervisors: Dr Erik Hanko & Prof Rainer Breitling.
