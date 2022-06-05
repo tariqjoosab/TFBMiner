@@ -1,4 +1,5 @@
 from itertools import chain
+from collections import OrderedDict
 from urllib.error import HTTPError
 from urllib.request import urlopen
 from tqdm import tqdm
@@ -8,6 +9,7 @@ import numpy as np
 import typing as typ
 import concurrent.futures
 import multiprocessing
+import re
 import time
 import sys
 import glob
@@ -21,8 +23,9 @@ def argument_parser():
     """Creates command-line options for the user."""
 
     parser = argparse.ArgumentParser(description = "TFBMiner: Identifies putative transcription factor-based biosensors for a given compound.")
-    parser.add_argument("compound", help="Enter the KEGG Compound ID of the inducer compound.")
+    parser.add_argument("compound", type=str, help="Enter the KEGG Compound ID of the inducer compound.")
     parser.add_argument("-l", "--length", type=int, help="Enter the maximum length of the enzymatic chains.", default=3)
+    parser.add_argument("-s", "--single_gene_operons", help="Choose whether to predict biosensors for rare, potential single-gene operons (y/n).", default="n")
 
     args = parser.parse_args()
 
@@ -101,7 +104,7 @@ def identify_reactions(compound):
             return []
 
 
-def investigate_reaction(reaction):
+def reaction_details(reaction):
     
     """
     Identifies the EC numbers of the enzymes that catalyse a reaction, along with
@@ -156,7 +159,7 @@ def investigate_reaction(reaction):
             return (None,)*3
 
 
-def chain_former(reactions, inducer, max_chain_length):
+def form_chains(reactions, inducer, max_chain_length):
     
     """Generates linear chains of enzymes that sequentially catabolize an inducer compound."""
 
@@ -172,7 +175,6 @@ def chain_former(reactions, inducer, max_chain_length):
     "C00011", "C00012", "C00013", "C00014", "C00019"
     ]
 
-
     def link_reactions(reaction, compound, recursion_depth=0, prior_chains=None, prior_enzymes=None, limit=max_chain_length):
 
         """
@@ -184,7 +186,7 @@ def chain_former(reactions, inducer, max_chain_length):
         # Retrieves and/or stores the details of a 
         # reaction that a compound is involved in.
         if reaction not in reactions_info:
-            enzymes, reactants, products = investigate_reaction(reaction)
+            enzymes, reactants, products = reaction_details(reaction)
             reaction_info = [enzymes, reactants, products]
             reactions_info[reaction] = reaction_info
         else:
@@ -247,7 +249,7 @@ def chain_former(reactions, inducer, max_chain_length):
     return all_chains
 
 
-def form_chains(inducer, max_chain_length):
+def optimize_chain_identifications(inducer, max_chain_length):
 
     """
     Conducts and optimizes the chain identification procedure 
@@ -270,7 +272,6 @@ def form_chains(inducer, max_chain_length):
         processes = None
 
     if processes is not None:
-
         # Chains are generated in parallel depending
         # on the total number of initial reactions.
         if processes >= 2:
@@ -278,7 +279,7 @@ def form_chains(inducer, max_chain_length):
             with concurrent.futures.ProcessPoolExecutor() as executor:
                 futures = []
                 for data in np.array_split(initial_reactions, processes):
-                    future = executor.submit(chain_former, data, inducer, max_chain_length)
+                    future = executor.submit(form_chains, data, inducer, max_chain_length)
                     futures.append(future)
 
                 chains_all = []
@@ -292,7 +293,7 @@ def form_chains(inducer, max_chain_length):
         # there is only one initial reaction.
         else:
             chains_all = []
-            chains_unfiltered = chain_former(initial_reactions, inducer, max_chain_length)
+            chains_unfiltered = form_chains(initial_reactions, inducer, max_chain_length)
             for chain in chains_unfiltered:
                 if chain not in chains_all:
                     chains_all.append(chain)
@@ -305,54 +306,53 @@ def form_chains(inducer, max_chain_length):
         sys.exit(f"No chains were identified for '{inducer}'")
 
 
-def retrieve_genes(chain):
+def retrieve_encoders(enzyme):
+
+    """
+    Finds the genes and organisms that encode an enzyme.
+    """
+
+    search = get_data(enzyme)
+    if search is not None:
+        encoders = []
+        current_section = None
+        for line in search.rstrip().split("\n"):
+            section = line[:12].strip()
+            if not section == "":
+                current_section = section
+
+                if current_section == "GENES":
+                    index = search.rstrip().split("\n").index(line)
+                    encoders.append(line[12:].split(": "))
+                    for line in search.rstrip().split("\n")[int(index)+1:]:
+                        if line[:12].strip() != "":
+                            break
+                        encoders.append(line[12:].split(": "))
+
+        return encoders
+
+
+def select_genome(organism_code, genome_assemblies, genome_files):
     
-    """Identifies organisms which possess all enzymes within a chain and retrieves the corresponding genes."""
+    """Identifies and returns an organism's GenBank genome assembly."""
 
-    all_genes = {}
-
-    for n in range(len(chain)):
-
-        # Data is retrieved from the enzyme's KEGG database entry.
-        enzyme = chain[n].lower()
-        search = get_data(enzyme)
-
-        # Data is read line by line
-        if search is not None:
-            x = []
-            current_section = None
-            for line in search.rstrip().split("\n"):
-                section = line[:12].strip()
-                if not section == "":
-                    current_section = section
-
-                    # Identifies the organisms that possess the enzyme
-                    # and the genes that encode it in their genomes.
-                    if current_section == "GENES":
-                        index = search.rstrip().split("\n").index(line)
-                        x.append(line[12:].split(": "))
-                        for line in search.rstrip().split("\n")[int(index)+1:]:
-                            if line[:12].strip() != "":
-                                break
-                            x.append(line[12:].split(": "))
-
-            # Organisms and their genes are stored in a dataframe.
-            all_genes["d" + str(n)] = pd.DataFrame(x, columns=["Organism", str(enzyme) + "_gene(s)"])
+    # Finds the relevant genome assembly for an organism.
+    index = genome_assemblies.index[genome_assemblies["Organism code"] == str(organism_code).lower()]
+    if not index.empty:
+        assembly = genome_assemblies["Assembly"][index].to_string(index=False, header=False)
+        
+        # Finds the feature table genome that has 
+        # the relevant genome assembly in its filename.
+        match = [s for s in genome_files if assembly[3:] in s]
     
-    gene_sets = len(all_genes)
-    if gene_sets > 1:    
-        try:
-            # Merges the dataframes to form one that only includes 
-            # organisms that possess all enzymes within the chain.
-            for x in range(gene_sets-1):
-                all_genes["d" + str(x+1)] = pd.merge(left = all_genes["d" + str(x)], right = all_genes["d" + str(int(x)+1)], left_on = "Organism", right_on = "Organism")
+        if match != []:
 
-            filtered_genes = all_genes["d" + str(max(range(gene_sets)))] 
+            # Reads and parses the correct feature table genome.
+            genome = pd.read_csv(match[0], sep="\t")
+            genome.drop(genome[genome["# feature"] == "gene"].index, inplace=True)
+            genome = genome.reset_index(drop=True)
 
-            return filtered_genes
-
-        except KeyError:
-            return None
+            return genome
 
 
 class Biosensor(typ.NamedTuple):
@@ -368,102 +368,120 @@ class Biosensor(typ.NamedTuple):
     gene_positions: dict
 
 
-def predict_biosensors(df, genome_assemblies, genome_files):
+def predict_biosensors(df, genome_assemblies, genome_files, single_gene_operons=False):
     
     """
-    Applies the in_regulon function to each row of a dataframe of organisms
-    and their genes that encode each enzyme within a chain. 
+    Applies a regulon identification algorithm to each row of a dataframe 
+    wherein each row contains a complete set of genes that encode an enzymatic 
+    chain or single enzyme, within a specific organism.
     """
     
     biosensors = []
 
-    def in_regulon(row, columns):
+    def identify_regulons(row, columns):
         
         """
-        Determines whether an organism's genes that encode enzymes within a chain have 
-        genetic organisations that are characteristic of operons and applies the identify_regulator 
-        function to each predicted operon to identify their putative transcriptional regulators.
+        Determines whether genes encoding a chain are organized in a manner
+        that is characteristic of an operon, wherein they are clustered together 
+        on the same DNA strand, and, if so, identifies a potential transcriptional 
+        regulator that could be a biosensor for the compound that the operon metabolizes.
         """
         
-        # Uses the organism code of a gene set to
-        # identify the correct genome assembly to use.
         organism_code = row[0]
-        index = genome_assemblies.index[genome_assemblies["Organism code"] == str(organism_code).lower()]
-        if not index.empty:
-            assembly = genome_assemblies["Assembly"][index].to_string(index=False, header=False)
-            
-            # Finds the feature table genome that that has 
-            # the relevant genome assembly in its filename.
-            match = [s for s in genome_files if assembly[3:] in s]
-        
-            if match != []:
+        genome = select_genome(organism_code, genome_assemblies, genome_files)
 
-                # Reads and parses the correct feature table genome.
-                genome = pd.read_csv(match[0], sep="\t")
-                genome.drop(genome[genome["# feature"] == "gene"].index, inplace=True)
-                genome = genome.reset_index(drop=True)
-                num_cols = len(columns)
+        if genome is not None:
+            num_cols = len(columns)
+            gene_positions = {}
+            genes_ = {}
+            for n in range(1, num_cols):
+                genes = row[n]
+                genes_[n] = genes
 
-                gene_positions = {}
-                genes_ = {}
-                for n in range(1, num_cols):
-                    genes = row[n]
-                    genes_[n] = genes
+            # Genes that encode the first enzyme within a chain
+            # are used as starting genes for potential operons.
+            starting_genes = genes_[1]
+            starting_genes = starting_genes.split(" ")
+            all_genes = [row[n].split(" ") for n in range(1, num_cols)]
+            all_genes = list(chain(*all_genes))
+            avoid_repeats = []
 
-                # Genes that encode the first enzyme within a chain
-                # are used as starting genes for potential operons.
-                starting_genes = genes_[1]
-                starting_genes = starting_genes.split(" ")
-                all_genes = [row[n].split(" ") for n in range(1, num_cols)]
-                all_genes = list(chain(*all_genes))
-                avoid_repeats = []
+            for x in range(len(starting_genes)):
+                starting_gene = starting_genes[x]
+                starting_gene_ = starting_gene.split("(")[0]
+                operon = [starting_gene]
+                avoid_repeats.append(x)
 
-                for x in range(len(starting_genes)):
-                    starting_gene = starting_genes[x]
-                    starting_gene_ = starting_gene.split("(")[0]
-                    operon = [starting_gene]
-                    avoid_repeats.append(x)
+                try:
+                    # Determines the index position and strand orientation of the starting gene.
+                    starting_position = genome.index[genome["locus_tag"] == starting_gene_].tolist()[0]
+                    starting_orientation = genome["strand"][starting_position]
 
-                    try:
-                        # Determines the index position and strand orientation of the starting gene.
-                        starting_position = genome.index[genome["locus_tag"] == starting_gene_].tolist()[0]
-                        starting_orientation = genome["strand"][starting_position]
+                    # Determines the index position and strand orientation of all other genes.
+                    for y in range(len(all_genes)):
+                        if y not in avoid_repeats:
+                            gene = all_genes[y]
+                            gene_ = gene.split("(")[0]
+                            position = genome.index[genome["locus_tag"] == gene_].tolist()[0]
+                            gene_orientation = genome["strand"][position]
 
-                        # Determines the index position and strand orientation of all other genes.
-                        for y in range(len(all_genes)):
-                            if y not in avoid_repeats:
-                                gene = all_genes[y]
-                                gene_ = gene.split("(")[0]
-                                position = genome.index[genome["locus_tag"] == gene_].tolist()[0]
-                                gene_orientation = genome["strand"][position]
-
-                                try:
-                                    # Genes that are nearby the starting gene and have 
-                                    # the same strand orientation are placed in the operon.
-                                    if (abs(int(starting_position) - int(position)) < 30) and (starting_orientation == gene_orientation):
-                                        operon.append(gene)
-                                        if y <= len(starting_genes)-1:
-                                            avoid_repeats.append(y)
-                                        if gene not in gene_positions:
-                                            gene_positions[gene] = position
-
-                                except ValueError:
-                                    pass
-                        
-                        # Identifies putative regulators of predicted operons
-                        # to predict potential biosensors for the inducer compound.
-                        if len(operon) > 1:
-                            if starting_gene not in gene_positions:
-                                gene_positions[starting_gene] = starting_position
-                            regulator, score, annotation = identify_regulator(genome, operon, starting_orientation, gene_positions)
-                            if None not in [regulator, score, annotation]:
-                                biosensor = Biosensor(operon, regulator, score, annotation, organism_code, genes_, gene_positions)
-                                biosensors.append(biosensor)
+                            try:
+                                # Genes that are nearby the starting gene and have 
+                                # the same strand orientation are placed in the operon.
+                                if (abs(int(starting_position) - int(position)) < 30) and (starting_orientation == gene_orientation):
+                                    operon.append(gene)
+                                    if y <= len(starting_genes)-1:
+                                        avoid_repeats.append(y)
+                                    if gene not in gene_positions:
+                                        gene_positions[gene] = position
+                            
+                            except ValueError:
+                                pass
                     
-                    except IndexError:
-                        pass
+                    # Identifies putative regulators of predicted operons
+                    # to predict potential biosensors for the inducer compound.
+                    if len(operon) > 1:
+                        if starting_gene not in gene_positions:
+                            gene_positions[starting_gene] = starting_position
+                        regulator, score, annotation = identify_regulator(genome, operon, starting_orientation, gene_positions)
+                        if None not in [regulator, score, annotation]:
+                            biosensor = Biosensor(operon, regulator, score, annotation, organism_code, genes_, gene_positions)
+                            biosensors.append(biosensor)
+                
+                except IndexError:
+                    pass
 
-    df.apply(lambda x: in_regulon(x, df.columns), axis=1)
+    def identify_single_gene_regulons(row):
+        
+        """
+        Identifies possible single-gene operons and their likely
+        transcriptional regulators to predict potential biosensors.
+        """
+
+        organism_code = row[0]
+        genome = select_genome(organism_code, genome_assemblies, genome_files)
+        if genome is not None:
+            genes = row[1].split(" ")
+            for gene in genes:
+                gene = gene.split("(")[0]
+                operon = [gene]
+                try:
+                    gene_position = genome.index[genome["locus_tag"] == gene].tolist()[0]
+                    gene_positions = {gene: gene_position}
+                    gene_orientation = genome["strand"][gene_position]
+                    regulator, score, annotation = identify_regulator(genome, operon, gene_orientation, gene_positions)
+                    if None not in [regulator, score, annotation]:
+                        biosensor = Biosensor(operon, regulator, score, annotation, organism_code, {1: gene}, gene_positions)
+                        biosensors.append(biosensor)
+                
+                except IndexError:
+                    pass
+
+    if single_gene_operons==False:
+        df.apply(lambda x: identify_regulons(x, df.columns), axis=1)
+
+    elif single_gene_operons==True:
+        df.apply(lambda x: identify_single_gene_regulons(x), axis=1)
 
     return biosensors
 
@@ -477,13 +495,13 @@ def identify_regulator(genome, operon, operon_orientation, gene_positions):
     """
 
     positions = [gene_positions[gene] for gene in operon]
-    
+
     try:
         # Selects regulators situated on the reverse DNA strand
         # that are upstream of an operon on the forward DNA strand.
         if operon_orientation == "+":
             start_position = min(positions)
-            start_seqtype = genome["seq_type"][min(positions)]
+            start_seqtype = genome["seq_type"][start_position]
             regulators = genome[genome["name"].str.contains("regulator|repressor|activator") == True]
             regulators = regulators[regulators["strand"] == "-"]
             regulators = regulators[regulators["seq_type"] == start_seqtype]
@@ -494,7 +512,7 @@ def identify_regulator(genome, operon, operon_orientation, gene_positions):
         # that are upstream of an operon on the reverse DNA strand.
         elif operon_orientation == "-":
             start_position = max(positions)
-            start_seqtype = genome["seq_type"][max(positions)]
+            start_seqtype = genome["seq_type"][start_position]
             regulators = genome[genome["name"].str.contains("regulator|repressor|activator") == True]
             regulators = regulators[regulators["strand"] == "+"]
             regulators = regulators[regulators["seq_type"] == start_seqtype]
@@ -559,89 +577,234 @@ def identify_regulator(genome, operon, operon_orientation, gene_positions):
         return (None,)*3
     
 
+def optimize_biosensor_predictions(df, genome_assemblies, genome_files, single_gene_operons=False):
+
+    """
+    Optimizes the execution of the biosensor prediction functions
+    based upon the size of the dataframe.
+    """
+
+    # Determines whether multiprocessing should be used on the data
+    # and calculates the number of processes to conduct.
+    cores = multiprocessing.cpu_count()    
+    if len(df) >= cores:
+        processes = cores
+    elif len(df) >= 2:
+        processes = 2
+    else:
+        processes = None
+    
+    # Splits the data evenly and applies the biosensor prediction 
+    # algorithms to the data using multiprocessing.
+    if processes is not None:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            futures = [executor.submit(predict_biosensors, data, genome_assemblies, genome_files, single_gene_operons=single_gene_operons) for data in np.array_split(df, processes)]            
+            results = [future.result() for future in futures]
+            biosensors = [inner for outer in results for inner in outer]
+
+    # If there is not enough data for multiprocessing,
+    # the data is instead processed sequentially.
+    else:   
+        biosensors = predict_biosensors(df, genome_assemblies, genome_files)
+
+    return biosensors
+
+
 def process_chain(chain, inducer, genome_assemblies, genome_files):
 
     """
-    Applies the biosensor prediction algorithms to an enzymatic chain 
-    and outputs the data to csv files in an understandable format.
+    Finds organisms that possess all enzymes within a chain and applies 
+    the biosensor prediction algorithms to the corresponding genes.
     """
 
     # Identifies whether there are any genomes that
     # encode all enzymes within the chain.
-    df = retrieve_genes(chain)    
-    if df is not None:
-        if (not df.empty) and (len(df.columns) > 2):
+    all_genes = {}
+    for n in range(len(chain)):
+        enzyme = chain[n].lower()
+        encoders = retrieve_encoders(enzyme)
+        if encoders is not None:
+            # Organisms and their genes are stored in a dataframe.
+            all_genes["d" + str(n)] = pd.DataFrame(encoders, 
+            columns=["Organism", str(enzyme) + "_gene(s)"])
+    num_sets = len(all_genes)
+    if num_sets > 1:    
+        try:
+            # Merges the dataframes to form one that only includes 
+            # organisms that possess all enzymes within the chain.
+            for x in range(num_sets-1):
+                all_genes["d" + str(x+1)] = pd.merge(
+                left = all_genes["d" + str(x)], 
+                right = all_genes["d" + str(int(x)+1)], 
+                left_on = "Organism", 
+                right_on = "Organism")
 
-            # Determines whether multiprocessing should be used on the data
-            # and calculates the number of processes to conduct.
-            cores = multiprocessing.cpu_count()    
-            if len(df) >= cores:
-                processes = cores
-            elif len(df) >= 2:
-                processes = 2
-            else:
-                processes = None
-            
-            # Splits the data evenly and applies the biosensor prediction 
-            # algorithms to the data using multiprocessing.
-            if processes is not None:
-                with concurrent.futures.ProcessPoolExecutor() as executor:
-                    futures = [executor.submit(predict_biosensors, data, genome_assemblies, genome_files) for data in np.array_split(df, processes)]            
-                    results = [future.result() for future in futures]
-                    regulons = [inner for outer in results for inner in outer]
+            filtered_encoders_df = all_genes["d" + str(max(range(num_sets)))] 
 
-            # If there is not enough data for multiprocessing,
-            # the data is instead processed sequentially.
-            else:   
-                regulons = predict_biosensors(df, genome_assemblies, genome_files)
-            
-            # If biosensors were predicted, they are ranked in order
-            # of their scores and formatted for data output.
-            num_regulons = len(regulons)
-            if num_regulons > 0:
-                regulons.sort(key=lambda x: x.regulator_score, reverse=True)
-                chain_length = len(chain)
+            if (not filtered_encoders_df.empty) and (len(filtered_encoders_df.columns) > 2):
+                df_cols = filtered_encoders_df.columns.values.tolist()
+                biosensors = optimize_biosensor_predictions(filtered_encoders_df, genome_assemblies, genome_files)
+                # If biosensors were predicted, they are ranked in order
+                # of their scores and formatted for data output.
+                num_biosensors = len(biosensors)
+                if num_biosensors > 0:
+                    output_predictions(biosensors, inducer, df_cols)
 
-                # Prepares output directory names for the data.
-                root = str(inducer) + "_results"
-                subroot = "chainlength=" + str(chain_length)
-                cols = df.columns.values.tolist()
-                name = inducer + "_" + "_".join(str(col)[3:9] for col in cols[1:]) + ".csv"
-                
-                # Formats the data for csv files.
-                header = ["Organism_code"] + [cols[x] for x in range(1, chain_length+1)] + ["Operon", 
-                            "Regulator", 
-                            "Regulator_score", 
-                            "Regulator_annotation"]
-                
-                data = [[regulon.organism_code] + 
-                        [regulon.genes[x] for x in range(1, chain_length+1)] +
-                        [" ".join(str(gene) for gene in regulon.operon),
-                        regulon.regulator,
-                        regulon.regulator_score,
-                        regulon.regulator_annotation] 
-                        for regulon in regulons]
-                
-                # Creates directories and outputs
-                # data as .csv files to them.
-                try:
-                    path = os.path.join(root, subroot, name)
-                    with open(path, "w", encoding="UTF8", newline="") as f:
-                        writer = csv.writer(f)
-                        writer.writerow(header)
-                        writer.writerows(data)
+                    return num_biosensors
 
-                except FileNotFoundError:
-                    dir = os.path.join(root, subroot)
-                    os.makedirs(dir)
-                    path = os.path.join(root, subroot, name)
+        except KeyError:
+            pass
 
-                    with open(path, "w", encoding="UTF8", newline="") as f:
-                        writer = csv.writer(f)
-                        writer.writerow(header)
-                        writer.writerows(data)
 
-                return num_regulons
+def process_all_chains(chains, total_chains, inducer, genome_assemblies, genome_files, t1):
+
+    """
+    Iterates through a collection of enzymatic chains and processes 
+    them to predict potential biosesors for the compound they metabolize.
+    """
+
+    print("{}Processing {} chains...{}".format("\n", total_chains, "\n"))
+    total_biosensors = 0
+    for n in tqdm(range(total_chains)):
+        num_biosensors = process_chain(chains[n], inducer, genome_assemblies, genome_files)
+        if num_biosensors is not None:
+            total_biosensors += num_biosensors
+    t2 = time.time()
+    if total_biosensors > 0:
+        print("{}Processing is complete. {} potential biosensors were identified for '{}'. Results have been deposited to '{}_results'. Total runtime: {}s.".format("\n", total_biosensors, inducer, inducer, round(t2-t1, 2)))
+    else:
+        print("{}Processing is complete. {} potential biosensors were identified for '{}'. Total runtime: {}".format("\n", total_biosensors, inducer, round(t2-t1, 2)))
+        alt = input("Would you like to predict biosensors for potential single-gene operons, instead? Predictions are more likely to be made, but at expense of lower prediction accuracy. (y/n)")
+        if alt == "y":
+            t1_new = time.time()
+            predict_single_gene_operon_biosensors(inducer, genome_assemblies, genome_files, t1_new)
+
+
+def identify_single_metabolizers(reactions, compound):
+    
+    """
+    Finds only initial enzymes that metabolize a compound.
+    """
+
+    enzymes = []
+    for reaction in reactions:
+        enzymes_, reactants, products = reaction_details(reaction)
+        if compound in reactants:
+            metabolizers = [enzyme_ for enzyme_ in enzymes_ if "-" not in enzyme_]
+            if len(metabolizers) > 0:
+                enzymes += metabolizers
+                for enzyme in metabolizers:
+                    print(f"Metabolizer identified: {enzyme}")
+    return enzymes
+
+
+def predict_single_gene_operon_biosensors(compound, genome_assemblies, genome_files, t1):
+    
+    """Predict and outputs potential biosensors for single-gene operons."""
+
+    enzymes = []
+    reactions = identify_reactions(compound)
+    num_reactions = len(reactions)
+    cores = multiprocessing.cpu_count()
+    print("{}Identifying enzymes that metabolize '{}'...{}".format('\n', compound, '\n'))
+    # Determines whether there are enough initial
+    # reactions to plit into multiple processes.
+    processes = cores if num_reactions>=cores else 2 if num_reactions>=2 else 1 if num_reactions==1 else None
+    if processes is not None:
+        if processes >= 2:
+            reactions = np.array(reactions, dtype=object)
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                futures = [executor.submit(identify_single_metabolizers, data, compound) for data in np.array_split(reactions, processes)]            
+                enzymes = [future.result() for future in futures]
+        elif processes == 1:
+            enzymes = identify_single_metabolizers(reactions[0])
+    else:
+        enzymes = []
+
+    enzymes = list(chain(*enzymes))
+    enzymes = list(dict.fromkeys(enzymes))
+    num_enzymes = len(enzymes)
+    print("{}{} unique enzymes were identified as metabolizers of {}.".format('\n', num_enzymes, compound))
+    if num_enzymes == 0:
+        sys.exit()
+
+    print("{}Processing 5 enzymes...{}".format('\n', '\n'))
+    total_biosensors = 0
+    for n in tqdm(range(num_enzymes)):
+        enzyme = enzymes[n].lower()
+        encoders = retrieve_encoders(enzyme)
+        if encoders is not None:
+            encoders_df = pd.DataFrame(encoders, 
+            columns=["Organism", str(enzyme) + "_gene(s)"])
+            if (not encoders_df.empty) and (len(encoders_df.columns) > 1):
+                df_cols = encoders_df.columns.values.tolist()
+                biosensors = optimize_biosensor_predictions(encoders_df, genome_assemblies, genome_files, single_gene_operons=True)
+                num_biosensors = len(biosensors)
+                if num_biosensors > 0:
+                    total_biosensors += num_biosensors
+                    output_predictions(biosensors, compound, df_cols)
+    t2 = time.time()
+    if total_biosensors > 0:
+        print("{}Processing is complete. {} potential biosensors were identified for '{}'. Results have been deposited to '{}_results'. Total runtime: {}s.".format("\n", total_biosensors, compound, compound, round(t2-t1, 2)))
+    else:
+        print("{}Processing is complete. {} potential biosensors were identified for '{}'. Total runtime: {}".format("\n", total_biosensors, compound, round(t2-t1, 2)))
+
+
+def output_predictions(biosensors, inducer, df_cols):
+
+    """
+    Formats the predicted biosensors data to be output
+    as .csv files in specific directories.
+    """
+
+    biosensors.sort(key=lambda x: x.regulator_score, reverse=True)
+    num_cols = len(df_cols)
+
+    # Prepares output directory names for the data.
+    root = str(inducer) + "_results"
+    if num_cols > 2:
+        subroot = "chainlength=" + str(num_cols-1)
+    else:
+        subroot = "single-enzyme_predictions"
+
+    # Prepares name for .csv file that will hold predictions
+    # for a specific enzymatic chain.
+    enzyme_colnames = df_cols[1:]
+    last_ec_num_idxs = [colname.rfind(re.match('.+([0-9])[^0-9]*$', colname).group(1)) for colname in enzyme_colnames]    
+    filename = inducer + "(" + "-".join("ec" + colname[3:last_ec_num_idxs[enzyme_colnames.index(colname)]+1] for colname in enzyme_colnames) + ").csv"
+    
+    # Formats the data for csv files.
+    header = ["Organism_code"] + [df_cols[x] for x in range(1, num_cols)] + ["Operon", 
+                "Regulator", 
+                "Regulator_score", 
+                "Regulator_annotation"]
+    
+    data = [[biosensor.organism_code] + 
+            [biosensor.genes[x] for x in range(1, num_cols)] +
+            [" ".join(str(gene) for gene in biosensor.operon),
+            biosensor.regulator,
+            biosensor.regulator_score,
+            biosensor.regulator_annotation] 
+            for biosensor in biosensors]
+    
+    # Creates directories and outputs
+    # data as .csv files to them.
+    try:
+        path = os.path.join(root, subroot, filename)
+        with open(path, "w", encoding="UTF8", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            writer.writerows(data)
+
+    except FileNotFoundError:
+        dir = os.path.join(root, subroot)
+        os.makedirs(dir)
+        path = os.path.join(root, subroot, filename)
+
+        with open(path, "w", encoding="UTF8", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            writer.writerows(data)
 
 
 def main():
@@ -650,25 +813,22 @@ def main():
     args = argument_parser()
     inducer = args.compound
     max_chain_length = args.length
+    single_gene_operons = args.single_gene_operons 
 
     if max_chain_length < 2:
         sys.exit("Error: chains cannot be less than 2 enzymes in length.")
-
     if max_chain_length > 5:
         i = input("The maximum chain length is recommended to be <= 5 for a manageable runtime. Would you still like to continue? (y/n): ")
         if i == 'y':
             pass
         else:
             sys.exit("Program closed.")
-
     if not os.path.isdir("genome_files"):
         sys.exit("Error: 'genome_files' folder was not found within the program directory.")
-
     if not os.listdir("genome_files"):
         sys.exit("Error: 'genome_files' folder is empty.")
 
     genome_files = glob.glob("genome_files\*")
-    
     try:
         genome_assemblies = pd.read_csv("genome_assemblies.csv")
         genome_assemblies.drop(columns=genome_assemblies.columns[0], 
@@ -677,23 +837,14 @@ def main():
     except FileNotFoundError:
         sys.exit("Error: 'genome_assemblies.csv' was not found within the program directory.")
     
-    print("{}Identifying enzymatic chains for '{}' with maximum chain length set to {}...{}".format("\n", inducer, max_chain_length, "\n"))
-    chains = form_chains(inducer, max_chain_length)
-    total_chains = len(chains)
-    print("{}{} unique chains were identified.".format("\n", total_chains))
-    pd.set_option('mode.chained_assignment', None)
-    print("{}Processing {} chains...{}".format("\n", total_chains, "\n"))
-    
-    total_biosensors = 0
-    for n in tqdm(range(total_chains)):
-        num_regulons = process_chain(chains[n], inducer, genome_assemblies, genome_files)
-        if num_regulons is not None:
-            total_biosensors += num_regulons
-    t2 = time.time()
-    if total_biosensors > 0:
-        print("{}Processing is complete. {} potential biosensors were identified for '{}'. Results have been deposited to '{}_results'. Total runtime: {}s.".format("\n", total_biosensors, inducer, inducer, round(t2-t1, 2)))
+    if single_gene_operons != "y":
+        print("{}Identifying enzymatic chains for '{}' with maximum chain length set to {}...{}".format("\n", inducer, max_chain_length, "\n"))
+        chains = optimize_chain_identifications(inducer, max_chain_length)
+        total_chains = len(chains)
+        print("{}{} unique chains were identified.".format("\n", total_chains))
+        process_all_chains(chains, total_chains, inducer, genome_assemblies, genome_files, t1)
     else:
-        print("{}Processing is complete. {} potential biosensors were identified for '{}'. Total runtime: {}".format("\n", total_biosensors, inducer, round(t2-t1, 2)))
+        predict_single_gene_operon_biosensors(inducer, genome_assemblies, genome_files, t1)
 
 
 if __name__ == "__main__":
