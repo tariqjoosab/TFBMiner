@@ -16,11 +16,12 @@ def output_predictions(biosensors, inducer, df_cols):
     num_cols = len(df_cols)
 
     # Prepares output directory names for the data.
-    root = str(inducer) + "_results"
+    dir_1 = "Results"
+    dir_2 = str(inducer) + "_results"
     if num_cols > 2:
-        subroot = "chainlength=" + str(num_cols-1)
+        dir_3 = "chainlength=" + str(num_cols-1)
     else:
-        subroot = "single-enzyme_predictions"
+        dir_3 = "single-enzyme_predictions"
 
     # Prepares name for .csv file that will hold predictions
     # for a specific enzymatic chain.
@@ -45,16 +46,16 @@ def output_predictions(biosensors, inducer, df_cols):
     # Creates directories and outputs
     # data as .csv files within them.
     try:
-        path = os.path.join(root, subroot, filename)
+        path = os.path.join(dir_1, dir_2, dir_3, filename)
         with open(path, "w", encoding="UTF8", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(header)
             writer.writerows(data)
             
     except FileNotFoundError:
-        dir = os.path.join(root, subroot)
-        os.makedirs(dir)
-        path = os.path.join(root, subroot, filename)
+        dirs = os.path.join(dir_1, dir_2, dir_3)
+        os.makedirs(dirs)
+        path = os.path.join(dir_1, dir_2, dir_3, filename)
         with open(path, "w", encoding="UTF8", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(header)
