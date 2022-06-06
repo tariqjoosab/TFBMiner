@@ -1,11 +1,11 @@
 # TFBMiner
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 
-A data acquisition and analysis pipeline for the rapid identification of putative transcription factor-based biosensors within bacterial genomes.
+A data acquisition and analysis pipeline for the rapid identification of putative transcription factor-based biosensors.
 ## Description
 
 ### Synopsis
-TFBMiner predicts putative transcription factor-based biosensors (TFBs) for a compound of interest firstly by identifying enzymes that sequentially catabolize the compound and linking them to form chains. Each chain is then processed to identify whether the enzymes are encoded by catabolic operons, and putative transcriptional regulators of the catabolic operons are predicted and scored based upon a conceptual model of how TFBs are organized within bacterial genomes. TFBMiner also has an option for predicting TFBs that regulate single genes, rather than genes encoding enzymatic chains.
+TFBMiner predicts putative transcription factor-based biosensors (TFBs) for a compound of interest firstly by identifying enzymes that sequentially catabolize the compound and linking them to form chains. Each chain is then processed to identify whether the enzymes are encoded by any catabolic operons, and putative transcriptional regulators of the catabolic operons are predicted and scored based upon a conceptual model of how TFBs are organized within bacterial genomes. TFBMiner also has an option for predicting TFBs that regulate single genes, rather than genes encoding enzymatic chains.
 
 ### Enzymatic chain identification
 TFBMiner initially receives the KEGG COMPOUND database ID of a compound of interest (denoted C1) and uses the KEGG REST API to retrieve data regarding which reactions C1 is involved in. Subsequently, reactions that catabolize the compound are identified, and the IDs of each product (C2) are used to identify reactions that catabolize C2. Enzymes that catalyse the initial reactions are linked to enzymes that catalyse the subsequent reactions to form chains that sequentially processes C1. This process continues until chains reach the maximum chain length, which is set by the user. Each chain will be output to the console, keeping the user updated during this stage.
@@ -15,7 +15,7 @@ Each enzymatic chain is processed to identify putative transcriptional regulator
 
 ## Usage
 ```sh
-TFBMiner.py [-h] [-l LENGTH] compound
+TFBMiner.py [-h] [-l LENGTH] [-s SINGLE_GENE_OPERON] compound
 ```
 
 ## Options
