@@ -6,18 +6,19 @@ A data acquisition and analysis pipeline for the rapid identification of putativ
 TFBMiner predicts putative transcription factor-based biosensors (TFBs) for a compound of interest firstly by identifying enzymes that sequentially catabolize the compound and linking them to form chains. Each chain is then processed to identify whether the enzymes are encoded by any catabolic operons, and putative transcriptional regulators of the catabolic operons are predicted and scored based upon a conceptual model of how TFBs are organized within bacterial genomes. TFBMiner also has an option for predicting TFBs that regulate single genes, rather than genes encoding enzymatic chains.
 
 ## Usage
+The user must first navigate to the ```/TFBMiner``` directory via the command line. From there, TFBMiner can be executed according to the following usage formula:
 ```sh
-TFBMiner.py [-h] [-l LENGTH] [-s SINGLE_GENE_OPERONS] compound
+TFBMiner.py [-h] [-l L] [-s S] compound
 ```
 
 ## Options
-```-h, --help```: Display the program usage, description, options, and guidance in the terminal.
+```compound```: The KEGG COMPOUND database ID of the compound to predict TFBs for.
 
-```compound```: Enter the KEGG COMPOUND database ID of the compound to predict TFBs for.
-
-```-l, --length```: Specify the maximum length of the enzymatic chains.
+```-l, --length```: Specify the maximum integer length of the enzymatic chains to generate.
 
 ```-s, --single_gene_operons```: Specify whether to predict biosensors for single genes rather than genes encoding enzymatic chains (y/n).
+
+```-h, --help```: Display the software usage, description, options, and guidance in the terminal.
 
 ## Examples
 To predict TFBs for l-arabinose using generated chains up to 3 enzymes in length:
