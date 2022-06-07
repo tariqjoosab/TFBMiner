@@ -28,11 +28,11 @@ def predict_single_gene_operon_biosensors(compound, genome_assemblies, genome_fi
     num_reactions = len(reactions)
     cores = multiprocessing.cpu_count()
     print("Identifying enzymes that metabolize '{}'...{}".format(compound, '\n'))
-    # Determines whether there are enough initial
-    # reactions to plit into multiple processes.
+    
     processes = cores if num_reactions>=cores else 2 if num_reactions>=2 else 1 if num_reactions==1 else None
     if processes is not None:
         if processes >= 2:
+            # Identifies catabolic enzymes concurrently.
             reactions = np.array(reactions, dtype=object)
             with concurrent.futures.ProcessPoolExecutor() as executor:
                 futures = [executor.submit(acquire_data.identify_single_metabolizers, data, compound) for data in np.array_split(reactions, processes)]            
@@ -42,6 +42,7 @@ def predict_single_gene_operon_biosensors(compound, genome_assemblies, genome_fi
     else:
         enzymes = []
 
+    # Removes repeated enzymes.
     enzymes = list(chain(*enzymes))
     enzymes = list(dict.fromkeys(enzymes))
     num_enzymes = len(enzymes)
