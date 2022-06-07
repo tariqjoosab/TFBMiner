@@ -186,7 +186,6 @@ def predict_biosensors(df, genome_assemblies, genome_files, single_gene_operons=
                                         avoid_repeats.append(y)
                                     if gene not in gene_positions:
                                         gene_positions[gene] = position
-                            
                             except ValueError:
                                 pass
                     
@@ -199,7 +198,6 @@ def predict_biosensors(df, genome_assemblies, genome_files, single_gene_operons=
                         if None not in [regulator, score, annotation]:
                             biosensor = Biosensor(operon, regulator, score, annotation, organism_code, genes_, gene_positions)
                             biosensors.append(biosensor)
-                
                 except IndexError:
                     pass
 
@@ -223,7 +221,6 @@ def predict_biosensors(df, genome_assemblies, genome_files, single_gene_operons=
                     if None not in [regulator, score, annotation]:
                         biosensor = Biosensor(operon, regulator, score, annotation, organism_code, {1: gene}, gene_positions)
                         biosensors.append(biosensor)
-                
                 except IndexError:
                     pass
 

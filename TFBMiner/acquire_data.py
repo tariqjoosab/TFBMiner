@@ -158,5 +158,4 @@ def retrieve_encoders(enzyme):
                         if line[:12].strip() != "":
                             break
                         encoders.append(line[12:].split(": "))
-
         return encoders
