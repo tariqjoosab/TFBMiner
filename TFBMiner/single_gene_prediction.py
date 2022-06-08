@@ -27,7 +27,7 @@ def predict_single_gene_operon_biosensors(compound, genome_assemblies, genome_fi
     reactions = acquire_data.identify_reactions(compound)
     num_reactions = len(reactions)
     cores = multiprocessing.cpu_count()
-    print("Identifying enzymes that metabolize '{}'...{}".format(compound, '\n'))
+    print("{}Identifying enzymes that metabolize '{}'...{}".format('\n', compound, '\n'))
     
     processes = cores if num_reactions>=cores else 2 if num_reactions>=2 else 1 if num_reactions==1 else None
     if processes is not None:
@@ -46,11 +46,11 @@ def predict_single_gene_operon_biosensors(compound, genome_assemblies, genome_fi
     enzymes = list(chain(*enzymes))
     enzymes = list(dict.fromkeys(enzymes))
     num_enzymes = len(enzymes)
-    print("{}{} enzymes were identified as metabolizers of {}.".format('\n', num_enzymes, compound))
+    print("{}{} unique enzymes were identified as metabolizers of {}.".format('\n', num_enzymes, compound))
     if num_enzymes == 0:
         sys.exit()
 
-    print("{}Processing 5 enzymes...{}".format('\n', '\n'))
+    print("{}Processing {} enzymes...{}".format('\n', num_enzymes, '\n'))
     total_biosensors = 0
     for n in tqdm(range(num_enzymes)):
         enzyme = enzymes[n].lower()
