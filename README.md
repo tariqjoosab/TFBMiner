@@ -3,7 +3,7 @@
 
 A data acquisition and analysis pipeline for the rapid identification of putative transcription factor-based biosensors.
 ## Synopsis
-TFBMiner predicts putative transcription factor-based biosensors (TFBs) for a compound of interest firstly by identifying enzymes that sequentially catabolize the compound and linking them to form chains. Each chain is then processed to identify whether the enzymes are encoded by any catabolic operons, and putative transcriptional regulators of the catabolic operons are predicted and scored based upon a conceptual model of how TFBs are organized within bacterial genomes. TFBMiner also has an option for predicting TFBs that regulate single genes, rather than genes encoding enzymatic chains.
+TFBMiner predicts putative transcription factor-based biosensors (TFBs) for a compound of interest firstly by identifying enzymes that sequentially catabolize the compound and linking them to form chains. Each chain is then processed to identify whether the enzymes are encoded by any catabolic operons within bacterial genomes, and putative transcriptional regulators of the catabolic operons are predicted and scored based upon a conceptual model of how TFBs are frequently genetically organized. TFBMiner also has an option for predicting TFBs that regulate single genes, rather than genes encoding enzymatic chains.
 
 ## Usage
 The user must first navigate to the ```/TFBMiner``` directory via the command line. From there, TFBMiner can be executed according to the following usage formula:
