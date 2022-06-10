@@ -13,9 +13,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-import acquire_data
-import biosensor_predictor
-import output
+from TFBMiner import acquire_data, biosensor_predictor, output
 
 
 def predict_single_gene_operon_biosensors(compound, genome_assemblies, genome_files, t1):

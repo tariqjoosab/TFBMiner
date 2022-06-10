@@ -1,0 +1,6 @@
+recursive-include TFBMiner *.py
+recursive-include TFBMiner/data *
+include LICENSE
+include README.md
+include requirements.txt
+include search_phrase.txt

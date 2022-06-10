@@ -8,10 +8,7 @@ import time
 import pandas as pd
 from tqdm import tqdm
 
-import acquire_data
-import output
-import biosensor_predictor
-import single_gene_prediction
+from TFBMiner import acquire_data, output, biosensor_predictor, single_gene_prediction
 
 
 def process_chain(chain, inducer, genome_assemblies, genome_files):

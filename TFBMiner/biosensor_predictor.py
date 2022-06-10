@@ -9,7 +9,7 @@ import concurrent.futures
 import numpy as np
 import pandas as pd
 
-from biosensor import Biosensor
+from TFBMiner.biosensor import Biosensor
 
 
 def select_genome(organism_code, genome_assemblies, genome_files):

@@ -8,7 +8,7 @@ import sys
 
 import numpy as np
 
-import acquire_data
+from TFBMiner import acquire_data
 
 
 def form_chains(reactions, inducer, max_chain_length):
