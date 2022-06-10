@@ -30,19 +30,19 @@ def main():
             pass
         else:
             sys.exit("Program closed.")
-    if not os.path.isdir("genome_files"):
-        sys.exit("Error: 'genome_files' folder was not found within the program directory.")
-    if not os.listdir("genome_files"):
-        sys.exit("Error: 'genome_files' folder is empty.")
+    if not os.path.isdir("data/genome_files"):
+        sys.exit("Error: 'genome_files' was not found within TFBMiner/data.")
+    if not os.listdir("data/genome_files"):
+        sys.exit("Error: TFBMiner/data/genome_files is empty.")
         
-    genome_files = glob.glob("genome_files\*")
+    genome_files = glob.glob("data/genome_files\*")
     try:
-        genome_assemblies = pd.read_csv("genome_assemblies.csv")
+        genome_assemblies = pd.read_csv("data/genome_assemblies.csv")
         genome_assemblies.drop(columns=genome_assemblies.columns[0], 
             axis=1, 
             inplace=True)
     except FileNotFoundError:
-        sys.exit("Error: 'genome_assemblies.csv' was not found within the program directory.")
+        sys.exit("Error: 'genome_assemblies.csv' was not found within TFBMiner/data.")
     
     if single_gene_operons != "y":
         print("{}Identifying enzymatic chains for '{}' with maximum chain length set to {}...{}".format("\n", inducer, max_chain_length, "\n"))

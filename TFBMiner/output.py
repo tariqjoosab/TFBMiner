@@ -16,7 +16,7 @@ def output_predictions(biosensors, inducer, df_cols):
     num_cols = len(df_cols)
 
     # Prepares output directory names for the data.
-    dir_1 = "Results"
+    dir_1 = "results"
     dir_2 = str(inducer) + "_results"
     if num_cols > 2:
         dir_3 = "chainlength=" + str(num_cols-1)
