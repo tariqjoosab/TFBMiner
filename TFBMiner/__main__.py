@@ -21,8 +21,10 @@ def main():
     t1 = time.time()
     args = create_args.argument_parser()
     inducer = args.compound
-    max_chain_length = args.length
+    max_chain_length = args.max_chain_length
     single_gene_operons = args.single_gene_operons 
+    genome_files_path = args.genome_files_path
+    output_path = args.output_path
 
     if max_chain_length < 2:
         sys.exit("Error: chains cannot be less than 2 enzymes in length.")
@@ -33,14 +35,19 @@ def main():
         else:
             sys.exit("Program closed.")
 
-    genome_files_path = get_path("genome_files")
+    home_path = os.path.expanduser("~")
+    if genome_files_path == "unspecified":
+        genome_files_path = os.path.join(home_path, "genome_files")
+    if output_path == "unspecified":
+        output_path = os.path.join(home_path, "TFB_predictions")
+
     if not os.path.isdir(genome_files_path):
         sys.exit(f"Error: {genome_files_path} was not found.")
     if not os.listdir(genome_files_path):
         sys.exit(f"Error: {genome_files_path} is empty.")
-    genome_files = glob.glob(genome_files_path+"\*")
-
-    genome_assemblies_path = get_path("genome_assemblies.csv")
+    else:
+        genome_files = glob.glob(genome_files_path+"\*")
+        genome_assemblies_path = get_path("genome_assemblies.csv")
     try:
         genome_assemblies = pd.read_csv(genome_assemblies_path)
         genome_assemblies.drop(columns=genome_assemblies.columns[0], 
@@ -50,13 +57,13 @@ def main():
         sys.exit(f"Error: {genome_assemblies_path} was not found.")
     
     if single_gene_operons != "y":
-        print("{}Identifying enzymatic chains for '{}' with maximum chain length set to {}...{}".format("\n", inducer, max_chain_length, "\n"))
+        print("{}Identifying enzymatic chains for {} with maximum chain length set to {}...{}".format("\n", inducer, max_chain_length, "\n"))
         chains = generate_chains.optimize_chain_identifications(inducer, max_chain_length)
         total_chains = len(chains)
         print("{}{} unique chains were identified.".format("\n", total_chains))
-        chain_processor.process_all_chains(chains, total_chains, inducer, genome_assemblies, genome_files, t1)
+        chain_processor.process_all_chains(chains, total_chains, inducer, genome_assemblies, genome_files, t1, output_path)
     else:
-        single_gene_prediction.predict_single_gene_operon_biosensors(inducer, genome_assemblies, genome_files, t1)
+        single_gene_prediction.predict_single_gene_operon_biosensors(inducer, genome_assemblies, genome_files, t1, output_path)
 
 
 if __name__ == "__main__":

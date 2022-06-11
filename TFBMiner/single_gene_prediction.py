@@ -16,7 +16,7 @@ from tqdm import tqdm
 from TFBMiner import acquire_data, biosensor_predictor, output
 
 
-def predict_single_gene_operon_biosensors(compound, genome_assemblies, genome_files, t1):
+def predict_single_gene_operon_biosensors(compound, genome_assemblies, genome_files, t1, output_path):
     """
     Identifies enzymes that metabolize a compound to find possible 
     single-gene operons, and predicts and outputs potential biosensors.
@@ -62,9 +62,9 @@ def predict_single_gene_operon_biosensors(compound, genome_assemblies, genome_fi
                 num_biosensors = len(biosensors)
                 if num_biosensors > 0:
                     total_biosensors += num_biosensors
-                    output.output_predictions(biosensors, compound, df_cols)
+                    output.output_predictions(biosensors, compound, df_cols, output_path)
     t2 = time.time()
     if total_biosensors > 0:
-        print("{}Processing is complete. {} potential biosensors were identified for '{}'. Results have been deposited to '{}_results'. Total runtime: {}s.".format("\n", total_biosensors, compound, compound, round(t2-t1, 2)))
+        print("{}Processing is complete. {} potential biosensors were identified for {}. Results have been deposited to {}. Total runtime: {}s.".format("\n", total_biosensors, compound, output_path, round(t2-t1, 2)))
     else:
-        print("{}Processing is complete. {} potential biosensors were identified for '{}'. Total runtime: {}".format("\n", total_biosensors, compound, round(t2-t1, 2)))
+        print("{}Processing is complete. {} potential biosensors were identified for {}. Total runtime: {}".format("\n", total_biosensors, compound, round(t2-t1, 2)))

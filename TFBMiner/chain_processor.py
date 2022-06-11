@@ -11,7 +11,7 @@ from tqdm import tqdm
 from TFBMiner import acquire_data, output, biosensor_predictor, single_gene_prediction
 
 
-def process_chain(chain, inducer, genome_assemblies, genome_files):
+def process_chain(chain, inducer, genome_assemblies, genome_files, output_path):
     """
     Finds organisms that possess all enzymes within a chain and applies 
     the biosensor prediction algorithms to the corresponding genes.
@@ -47,13 +47,13 @@ def process_chain(chain, inducer, genome_assemblies, genome_files):
                 # of their scores and formatted for data output.
                 num_biosensors = len(biosensors)
                 if num_biosensors > 0:
-                    output.output_predictions(biosensors, inducer, df_cols)
+                    output.output_predictions(biosensors, inducer, df_cols, output_path)
                     return num_biosensors
         except KeyError:
             pass
 
 
-def process_all_chains(chains, total_chains, inducer, genome_assemblies, genome_files, t1):
+def process_all_chains(chains, total_chains, inducer, genome_assemblies, genome_files, t1, output_path):
     """
     Iterates through a collection of enzymatic chains and processes 
     them to predict potential biosesors for the compound they metabolize.
@@ -61,15 +61,15 @@ def process_all_chains(chains, total_chains, inducer, genome_assemblies, genome_
     print("{}Processing {} chains...{}".format("\n", total_chains, "\n"))
     total_biosensors = 0
     for n in tqdm(range(total_chains)):
-        num_biosensors = process_chain(chains[n], inducer, genome_assemblies, genome_files)
+        num_biosensors = process_chain(chains[n], inducer, genome_assemblies, genome_files, output_path)
         if num_biosensors is not None:
             total_biosensors += num_biosensors
     t2 = time.time()
     if total_biosensors > 0:
-        print("{}Processing is complete. {} potential biosensors were identified for '{}'. Results have been deposited to '{}_results'. Total runtime: {}s.".format("\n", total_biosensors, inducer, inducer, round(t2-t1, 2)))
+        print("{}Processing is complete. {} potential biosensors were identified for {}. Results have been deposited to {}. Total runtime: {}s.".format("\n", total_biosensors, inducer, output_path, round(t2-t1, 2)))
     else:
-        print("{}Processing is complete. {} potential biosensors were identified for '{}'. Total runtime: {}".format("\n", total_biosensors, inducer, round(t2-t1, 2)))
+        print("{}Processing is complete. {} potential biosensors were identified for {}. Total runtime: {}".format("\n", total_biosensors, inducer, round(t2-t1, 2)))
         alt = input("Would you like to predict biosensors for potential single-gene operons, instead? Predictions are more likely to be made, but at expense of lower prediction accuracy. (y/n)")
         if alt == "y":
             t1_new = time.time()
-            single_gene_prediction.predict_single_gene_operon_biosensors(inducer, genome_assemblies, genome_files, t1_new)
+            single_gene_prediction.predict_single_gene_operon_biosensors(inducer, genome_assemblies, genome_files, t1_new, output_path)
