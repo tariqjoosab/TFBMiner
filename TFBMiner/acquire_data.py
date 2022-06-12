@@ -121,23 +121,7 @@ def reaction_details(reaction):
 
         except UnboundLocalError:
             return (None,)*3
-
-
-def identify_single_metabolizers(reactions, compound):
-    """
-    Finds only initial enzymes that metabolize a compound.
-    """
-    enzymes = []
-    for reaction in reactions:
-        enzymes_, reactants, products = reaction_details(reaction)
-        if compound in reactants:
-            metabolizers = [enzyme_ for enzyme_ in enzymes_ if "-" not in enzyme_]
-            if len(metabolizers) > 0:
-                enzymes += metabolizers
-                for enzyme in metabolizers:
-                    print(f"Metabolizer identified: {enzyme}")
-    return enzymes
-
+            
 
 def retrieve_encoders(enzyme):
     """

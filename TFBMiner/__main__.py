@@ -9,7 +9,7 @@ import os
 
 import pandas as pd
 
-from TFBMiner import generate_chains, create_args, single_gene_prediction, chain_processor
+from TFBMiner import create_args, identify_metabolizers, process_metabolizers
 
 
 _ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -57,14 +57,12 @@ def main():
         sys.exit(f"Error: {genome_assemblies_path} was not found.")
     
     if single_gene_operons != "y":
-        print("{}Identifying enzymatic chains for {} with maximum chain length set to {}...{}".format("\n", inducer, max_chain_length, "\n"))
-        chains = generate_chains.optimize_chain_identifications(inducer, max_chain_length)
-        total_chains = len(chains)
-        print("{}{} unique chains were identified.".format("\n", total_chains))
-        chain_processor.process_all_chains(chains, total_chains, inducer, genome_assemblies, genome_files, t1, output_path)
+        chains, total_chains = identify_metabolizers.MetabolizerIdentifier(inducer).execute_chain_identification(max_chain_length)
+        process_metabolizers.MetabolizerProcessor(inducer, genome_assemblies, genome_files, t1, output_path, chains, total_chains).process_chains()
     else:
-        single_gene_prediction.predict_single_gene_operon_biosensors(inducer, genome_assemblies, genome_files, t1, output_path)
-
+        enzymes, total_enzymes = identify_metabolizers.MetabolizerIdentifier(inducer).execute_single_metabolizer_identification()
+        process_metabolizers.MetabolizerProcessor(inducer, genome_assemblies, genome_files, t1, output_path, enzymes, total_enzymes).process_single_metabolizers()
+        
 
 if __name__ == "__main__":
     main()

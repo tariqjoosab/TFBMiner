@@ -5,11 +5,23 @@ Contains functions for predicting operons and biosensors within specific genomes
 from itertools import chain
 import multiprocessing
 import concurrent.futures
+import typing as typ
 
 import numpy as np
 import pandas as pd
 
-from TFBMiner.biosensor import Biosensor
+
+class Biosensor(typ.NamedTuple):
+    """
+    Stores biosensors and their relevant attributes in named tuples.
+    """
+    operon: str
+    regulator: str
+    regulator_score: int
+    regulator_annotation: str
+    organism_code: str
+    genes: dict
+    gene_positions: dict
 
 
 def select_genome(organism_code, genome_assemblies, genome_files):
@@ -233,17 +245,18 @@ def predict_biosensors(df, genome_assemblies, genome_files, single_gene_operons=
     return biosensors
 
 
-def optimize_biosensor_predictions(df, genome_assemblies, genome_files, single_gene_operons=False):
+def execute_biosensor_predictions(df, genome_assemblies, genome_files, single_gene_operons=False):
     """
     Optimizes the execution of the biosensor prediction functions
     based upon the size of the dataframe.
     """
     # Determines whether the data is large enough for multiprocessing 
     # and calculates the number of processes to conduct.
-    cores = multiprocessing.cpu_count()    
-    if len(df) >= cores:
+    total_organisms = len(df)
+    cores = multiprocessing.cpu_count()
+    if total_organisms >= cores:
         processes = cores
-    elif len(df) >= 2:
+    elif total_organisms >= 2:
         processes = 2
     else:
         processes = None
