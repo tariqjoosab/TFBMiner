@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="TFBMiner",
-    version="1.2.0",
+    version="2.0.0",
     description="A data acquisition and analysis pipeline for the rapid identification of putative transcription factor-based biosensors.",
     author="Tariq Joosab",
     project_urls={"Source": "https://github.com/tariqjoosab/tfb-miner"},
