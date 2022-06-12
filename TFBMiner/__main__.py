@@ -9,7 +9,7 @@ import os
 
 import pandas as pd
 
-from TFBMiner import create_args, identify_metabolizers, process_metabolizers
+from TFBMiner import interface, identify_metabolizers, process_metabolizers
 
 
 _ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -19,7 +19,7 @@ def get_path(path):
 
 def main():
     t1 = time.time()
-    args = create_args.argument_parser()
+    args = interface.argument_parser()
     inducer = args.compound
     max_chain_length = args.max_chain_length
     single_gene_operons = args.single_gene_operons 
