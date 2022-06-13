@@ -27,7 +27,7 @@ py -m TFBMiner [-h] [-l L] [-s S] [-g G] [-o O] compound
 ```sh 
 py -m TFBMiner C00259 -l 3
 ```
-* Predicts TFBs for l-arabinose (ID: C00259)
+* Predicts TFBs for l-arabinose (ID: `C00259`)
 * Identified chains will be up to 3 enzymes in length
 * Nothing specified for `-g`, so TFBMiner will default to using the user's home path to find the `genome_files` directory
 * Nothing specified for `-o`, so TFBMiner will default to using the user's home path and as a place to store the predictions
@@ -43,7 +43,7 @@ py -m TFBMiner C01494 -l 5 -g C:\Users\user\Desktop\genome_files -o C:\Users\use
 ```sh
 py -m TFBMiner C00180 -s y -o /Users/user/Desktop/Results
 ```
-* Predicts TFBs for benzoate (ID: C00180)
+* Predicts TFBs for benzoate (ID: `C00180`)
 * Genes that encode single enzyme metabolizers of benzoate will be used to predict TFBs
 * Nothing specified for `-g`, so TFBMiner will default to using the user's home path to find the `genome_files` directory.
 * Predictions will be output to `/Users/user/Desktop/Results` (Mac OS X)
