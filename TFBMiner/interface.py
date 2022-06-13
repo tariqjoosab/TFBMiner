@@ -11,7 +11,7 @@ def argument_parser():
     """
     parser = argparse.ArgumentParser(
         prog="TFBMiner",
-        usage="py -m TFBMiner [-h] [-l L] [-s S] compound",
+        usage="py -m TFBMiner [-h] [-l L] [-s S] [-g G] [-o O] compound",
         description = "TFBMiner: Identifies putative transcription factor-based biosensors for a given compound."
     )
     parser.add_argument(
@@ -29,12 +29,14 @@ def argument_parser():
     parser.add_argument(
         "-s", 
         "--single_gene_operons", 
+        type=str,
         help="Choose whether to predict biosensors for rare, potential single-gene operons (y/n).", 
         default="n"
     )
     parser.add_argument(
         "-g",
         "--genome_files_path",
+        type=str,
         help="Enter the absolute path of the 'genome_files' directory that contains feature table genomes of bacteria held on the KEGG GENOME database. If unspecified, TFBMiner will try to locate it within the user's home directory.",
         default="unspecified"
     )
