@@ -28,7 +28,7 @@ py -m TFBMiner [-h] [-l L] [-s S] [-g G] [-o O] compound
 py -m TFBMiner C00259 -l 3
 ```
 * Predicts TFBs for l-arabinose (ID: `C00259`)
-* Identified chains will be up to 3 enzymes in length
+* Identified chains will be up to `3` enzymes in length
 * Nothing specified for `-g`, so TFBMiner will default to using the user's home path to find the `genome_files` directory
 * Nothing specified for `-o`, so TFBMiner will default to using the user's home path and as a place to store the predictions
 
