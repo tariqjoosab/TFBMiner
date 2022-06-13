@@ -20,7 +20,6 @@ class MetabolizerProcessor:
         self.metabolizers = metabolizers
         self.total_metabolizers = total_metabolizers
 
-
     def process_chains(self):
         """
         Iterates through a collection of enzymatic chains and processes 
@@ -76,7 +75,6 @@ class MetabolizerProcessor:
                 self.metabolizers = enzymes
                 self.total_metabolizers = total_enzymes
                 total_biosensors = self.process_single_metabolizers()
-
 
     def process_single_metabolizers(self):
         """

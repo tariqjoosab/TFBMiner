@@ -24,7 +24,6 @@ class MetabolizerIdentifier:
         products_info = {}
         reactions_info = {}
         all_chains = []
-
         # The IDs of unnecessary byproducts, such as H20 and NADH.
         excluded_compounds = [
         "C00035", "C00040", "C00025", "C00044", "C00007", 
@@ -55,7 +54,6 @@ class MetabolizerIdentifier:
                 starting_compound = compound
                 # Reactions that catabolize the compound are processed.
                 if starting_compound in reactants:
-                        
                     # Creates enzymatic chains by linking enzymes that catalyse the
                     # reaction at the current depth to enzymes from the previous depth. 
                     if (recursion_depth == 1) and (prior_enzymes is not None):
@@ -64,12 +62,10 @@ class MetabolizerIdentifier:
                                     if '-' not in enzyme_1
                                     for enzyme_2 in enzymes
                                     if '-' not in enzyme_2] 
-                    
                     # Extends enzymatic chains from the previous depth.
                     elif (recursion_depth > 1) and (prior_chains is not None):
                         extended_chains = [chain + [e] for e in enzymes for chain in prior_chains if '-' not in e]
                         chains_ = extended_chains
-                        
                     else:
                         chains_ = None
                     
@@ -103,7 +99,6 @@ class MetabolizerIdentifier:
             link_reactions(reaction, self.inducer)
 
         return all_chains
-
 
     def execute_chain_identification(self, max_chain_length):
         """
@@ -148,7 +143,6 @@ class MetabolizerIdentifier:
         else:
             sys.exit(f"No chains were identified for {self.inducer}")
 
-
     def identify_single_metabolizers(self, reactions):
         """
         Finds only initial enzymes that metabolize a compound.
@@ -163,7 +157,6 @@ class MetabolizerIdentifier:
                     for enzyme in metabolizers:
                         print(f"Metabolizer identified: {enzyme}")
         return enzymes
-
 
     def execute_single_metabolizer_identification(self):
         """

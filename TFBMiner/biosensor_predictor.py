@@ -32,13 +32,10 @@ def select_genome(organism_code, genome_assemblies, genome_files):
     index = genome_assemblies.index[genome_assemblies["Organism code"] == str(organism_code).lower()]
     if not index.empty:
         assembly = genome_assemblies["Assembly"][index].to_string(index=False, header=False)
-        
         # Finds the feature table genome that has 
         # the relevant genome assembly in its filename.
         match = [s for s in genome_files if assembly[3:] in s]
-    
         if match != []:
-
             # Reads and parses the correct feature table genome.
             genome = pd.read_csv(match[0], sep="\t")
             genome.drop(genome[genome["# feature"] == "gene"].index, inplace=True)
@@ -54,7 +51,6 @@ def identify_regulator(genome, operon, operon_orientation, gene_positions):
     and on the opposite DNA strand.
     """
     positions = [gene_positions[gene] for gene in operon]
-
     try:
         # Selects regulators situated on the reverse DNA strand
         # that are upstream of an operon on the forward DNA strand.
@@ -66,7 +62,6 @@ def identify_regulator(genome, operon, operon_orientation, gene_positions):
             regulators = regulators[regulators["seq_type"] == start_seqtype]
             reg_positions = regulators.index.to_list()
             reg_positions = [reg_position for reg_position in reg_positions if reg_position <= start_position]
-
         # Selects regulators situated on the forward DNA strand
         # that are upstream of an operon on the reverse DNA strand.
         elif operon_orientation == "-":
@@ -77,10 +72,9 @@ def identify_regulator(genome, operon, operon_orientation, gene_positions):
             regulators = regulators[regulators["seq_type"] == start_seqtype]
             reg_positions = regulators.index.to_list()
             reg_positions = [reg_position for reg_position in reg_positions if reg_position >= start_position]
-
         else:
             reg_positions = None
-    
+            
     except (AttributeError, IndexError):
         reg_positions = None
 
@@ -97,14 +91,12 @@ def identify_regulator(genome, operon, operon_orientation, gene_positions):
             regulator_position = reg_positions[idx]
             closest_regulator = regulators["locus_tag"][regulator_position]
             annotation =  regulators["name"][regulator_position]
-            
             score = 0
 
             # The closest regulator does not have any points deducted
             # from its score if it situated right next to the operon.
             if abs(regulator_position - start_position) == 1:
                 pass
-
             # Scores closest regulators that are situated on the forward
             # DNA strand and do not directly neighbour the operon.
             elif regulator_position > start_position:
@@ -114,7 +106,6 @@ def identify_regulator(genome, operon, operon_orientation, gene_positions):
                         score -= 2
                     else:
                         score -= 1
-
             # Scores closest regulators that are situated on the reverse
             # DNA strand and do not directly neighbour the operon.
             elif regulator_position < start_position:
@@ -124,7 +115,6 @@ def identify_regulator(genome, operon, operon_orientation, gene_positions):
                         score -= 2
                     else:
                         score -= 1
-                
             else:
                 score = None
         
@@ -175,12 +165,10 @@ def predict_biosensors(df, genome_assemblies, genome_files, single_gene_operons=
                 starting_gene_ = starting_gene.split("(")[0]
                 operon = [starting_gene]
                 avoid_repeats.append(x)
-
                 try:
                     # Determines the index position and strand orientation of the starting gene.
                     starting_position = genome.index[genome["locus_tag"] == starting_gene_].tolist()[0]
                     starting_orientation = genome["strand"][starting_position]
-
                     # Determines the index position and strand orientation of all other genes.
                     for y in range(len(all_genes)):
                         if y not in avoid_repeats:
@@ -188,7 +176,6 @@ def predict_biosensors(df, genome_assemblies, genome_files, single_gene_operons=
                             gene_ = gene.split("(")[0]
                             position = genome.index[genome["locus_tag"] == gene_].tolist()[0]
                             gene_orientation = genome["strand"][position]
-
                             try:
                                 # Genes that are nearby the starting gene and have 
                                 # the same strand orientation are placed in the operon.
