@@ -67,7 +67,7 @@ class MetabolizerProcessor:
         if total_biosensors > 0:
             print("{}Processing is complete. {} potential biosensors were identified for {}. Results have been deposited to {}. Total runtime: {}s.".format("\n", total_biosensors, self.inducer, self.output_path, round(t2-self.t1, 2)))
         else:
-            print("{}Processing is complete. {} potential biosensors were identified for {}. Total runtime: {}".format("\n", total_biosensors, self.inducer, round(t2-self.t1, 2)))
+            print("{}Processing is complete. {} potential biosensors were identified for {}. Total runtime: {}s".format("\n", total_biosensors, self.inducer, round(t2-self.t1, 2)))
             alt = input("Would you like to predict biosensors for potential single-gene operons, instead? Predictions are more likely to be made, but at expense of lower prediction accuracy. (y/n)")
             if alt == "y":
                 self.t1 = time.time()
@@ -100,4 +100,4 @@ class MetabolizerProcessor:
         if total_biosensors > 0:
             print("{}Processing is complete. {} potential biosensors were identified for {}. Results have been deposited to {}. Total runtime: {}s.".format("\n", total_biosensors, self.inducer, self.output_path, round(t2-self.t1, 2)))
         else:
-            print("{}Processing is complete. {} potential biosensors were identified for {}. Total runtime: {}".format("\n", total_biosensors, self.inducer, round(t2-self.t1, 2)))
+            print("{}Processing is complete. {} potential biosensors were identified for {}. Total runtime: {}s".format("\n", total_biosensors, self.inducer, round(t2-self.t1, 2)))
