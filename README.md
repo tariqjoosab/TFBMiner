@@ -54,7 +54,7 @@ py -m TFBMiner C00180 -s y -o /Users/user/Desktop/Results
 * [tqdm](https://github.com/tqdm/tqdm) (version 4.62.3)
 
 ## Setup
-To run TFBMiner, [Python 3.10.1](https://www.python.org/downloads/release/python-3101/) must be installed on the user's system. TFBMiner can be installed by cloning the repository and using the Python package manager ([pip](https://pypi.org/project/pip/)) to install its contents via the terminal. 
+To run TFBMiner, [Python](https://www.python.org/) (version compatibility: >=3.8, <3.11) must be installed on the user's system. TFBMiner can be installed by cloning the repository and using the Python package manager ([pip](https://pypi.org/project/pip/)) to install its contents via the terminal. 
 Before installation, the current working directory should be set to the repository, which is where `setup.py` will be located. Then, the installation procedure can be executed by entering `py -m pip install .`.
 
 To process identified enzymatic chains, TFBMiner needs access to complete and fully annotated GenBank feature table genomes for all bacteria held on the KEGG GENOME database. These genomes can be downloaded from [this Dropbox folder](https://www.dropbox.com/sh/ezo6ahj033cev8b/AADm-bC728rD0l9PTgPA9bgpa?dl=0).

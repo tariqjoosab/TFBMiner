@@ -7,7 +7,7 @@ setup(
     description="A data acquisition and analysis pipeline for the rapid identification of putative transcription factor-based biosensors.",
     author="Tariq Joosab",
     project_urls={"Source": "https://github.com/tariqjoosab/tfb-miner"},
-    python_requires="==3.10.1",
+    python_requires=">=3.8, <3.11",
     platforms="OS independent",
     license="MIT License",
     zip_safe=False,
