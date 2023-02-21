@@ -30,13 +30,13 @@ When using a terminal please type in everything after the '> ' sign. Instruction
 download minicoda if you dont have it already
 https://docs.conda.io/en/latest/miniconda.html
 
-#Windows
+### Windows
 Open the Anaconda/miniconda prompt
 
-#Linux
+### Linux
 Open a terminal
 
-# Create a virtual environment using the command  (for this part it doesn't matter where you are in your file system)
+### Create a virtual environment using the command  (for this part it doesn't matter where you are in your file system)
 > conda create --name tfbMiner python=3.10
 If it asks if you want to proceed press y
 > y
@@ -50,7 +50,7 @@ Install the requirements with the following commands
 > conda install numpy=1.21.5
 > conda install pandas=1.5.2
 
-# Download the code/data
+### Download the code/data
 Install the code by going to the github page and clicking Code, Download Zip. Unzip the zip-file in the directory that you want to work in
 https://github.com/UoMMIB/TFBMiner
 
@@ -67,7 +67,7 @@ Open a windows explorer and drag the TFBMiner-main file into the prompt, it shou
 Double check that you are in the TFBMiner-main folder and the tfbMiner environment. The left of your terminal should look something like this:
 (tfbMiner) C:\Users\ruths\workCode\TFBMiner-main>
 
-#Run the code! 
+### Run the code! 
 Use the -g flag to indictate the genome data and the -o file to indicate the results folder that you made
 > python -m TFBMiner C00259 -g C:\Users\ruths\workCode\TFBMiner-main\genome_files\ -o C:\Users\ruths\workCode\TFBMiner-main\results\
 
