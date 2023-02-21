@@ -36,7 +36,8 @@ Open the Anaconda/miniconda prompt
 ### Linux
 Open a terminal
 
-### Create a virtual environment using the command  (for this part it doesn't matter where you are in your file system)
+### Create a virtual environment
+Create a virtual environment using the following command  (for this part it doesn't matter where you are in your file system)
 > conda create --name tfbMiner python=3.10
 If it asks if you want to proceed press y
 > y
@@ -57,15 +58,16 @@ https://github.com/UoMMIB/TFBMiner
 Download the data by going to the Dropbox page and clicking download. This contains a lot of files so make a folder called genome_files in the directory that you want to work in and extract the data into there.
 https://www.dropbox.com/sh/ezo6ahj033cev8b/AADm-bC728rD0l9PTgPA9bgpa?dl=0
 
+### Final steps befor running the code
 Make a results folder in the directory that you want to work in.
 
 Within the conda prompt you need to us the "cd" (change directory) command to get to the correct place within your file system.
 > cd (dont press enter yet!)
 Open a windows explorer and drag the TFBMiner-main file into the prompt, it should look like this
-(tfbMiner) C:\Users>cd C:\Users\ruths\workCode\TFBMiner-main (press enter)
+> (tfbMiner) C:\Users>cd C:\Users\ruths\workCode\TFBMiner-main (press enter)
 
 Double check that you are in the TFBMiner-main folder and the tfbMiner environment. The left of your terminal should look something like this:
-(tfbMiner) C:\Users\ruths\workCode\TFBMiner-main>
+> (tfbMiner) C:\Users\ruths\workCode\TFBMiner-main>
 
 ### Run the code! 
 Use the -g flag to indictate the genome data and the -o file to indicate the results folder that you made
@@ -108,11 +110,6 @@ py -m TFBMiner C00180 -s y -o /Users/user/Desktop/Results
 * [tqdm](https://github.com/tqdm/tqdm) (version 4.62.3)
 
 ## Setup
-To install and run TFBMiner, [Python](https://www.python.org/) (version compatibility: >=3.8, <3.11) must first be installed on the user's system. TFBMiner can be installed using the Python package manager ([pip](https://pypi.org/project/pip/)) via the terminal:
-```sh
-py -m pip install git+https://github.com/tariqjoosab/tfb-miner.git
-```
-
 To process identified enzymatic chains, TFBMiner needs access to complete and fully annotated [GenBank](https://www.ncbi.nlm.nih.gov/genbank/)  feature table genomes for all bacteria held on the [KEGG GENOME](https://www.genome.jp/kegg/genome/) database. These genomes can be downloaded from [this Dropbox folder](https://www.dropbox.com/sh/ezo6ahj033cev8b/AADm-bC728rD0l9PTgPA9bgpa?dl=0). Once downloaded, the (unzipped) folder can be placed within the user's home directory (`C:\Users\user` on Windows OS, for instance), which is where TFBMiner will default to searching within to find the folder; this is conducted in an OS-independent manner. Alternatively, one can place the folder within a different directory and specify its absolute path to TFBMiner via the `-g` command-line argument.
 
 While not necessary, one may wish to use up-to-date versions of the bacterial feature table genomes. If so, they can be downloaded from the [NCBI Assembly](https://www.ncbi.nlm.nih.gov/assembly) database in bulk. However, without advanced specification, this will also result in the acquisition of genomes that are not held on KEGG, and using more genomes than necessary may cause a slight performance deficit. To obtain only relevant genomes, one can paste the contents of `search_phrase.txt` into the advanced search builder of NCBI Assembly. These contents consist of each GenBank assembly code of bacteria on KEGG GENOME separated by the `OR` search operator, which therefore specifies to NCBI Assembly to only retrieve these genomes.
