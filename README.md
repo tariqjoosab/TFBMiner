@@ -25,7 +25,6 @@ py -m TFBMiner [-h] [-l L] [-s S] [-g G] [-o O] compound
 
 ## Installation
 These are beginner's instructions for using TFBMiner. 
-When using a terminal please type in everything after the '> ' sign. Instructions without a '> ' can be followed by going to websites and navigating files your normal file explorer/windows explorer/directory folder.
 
 download minicoda if you dont have it already
 https://docs.conda.io/en/latest/miniconda.html
@@ -37,10 +36,8 @@ Open the Anaconda/miniconda prompt
 Open a terminal
 
 ### Create a virtual environment
-Create a virtual environment using the following command  (for this part it doesn't matter where you are in your file system)
+Create a virtual environment using the following command  (for this part it doesn't matter where you are in your file system). If it asks if you want to proceed press y.
 > conda create --name tfbMiner python=3.10
-If it asks if you want to proceed press y
-> y
 
 Activate the environment, you should see "(base)" on the left of the conda prompt be replaced with "(tfbMiner)". It this does not happen then software that you install could affect the result of your computer.
 > conda activate tfbMiner
