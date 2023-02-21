@@ -49,8 +49,7 @@ Install the requirements with the following commands
 > conda install pandas=1.5.2
 
 ### Download the code/data
-Install the code by going to the github page and clicking Code, Download Zip. Unzip the zip-file in the directory that you want to work in
-https://github.com/UoMMIB/TFBMiner
+Install the code by going to the github page and clicking Code, Download Zip. Unzip the zip-file in the directory that you want to work in https://github.com/RuthStoney/TFBMiner - this will be changed to https://github.com/UoMMIB/TFBMiner ones everything's totally finalized
 
 Download the data by going to the Dropbox page and clicking download. This contains a lot of files so make a folder called genome_files in the directory that you want to work in and extract the data into there.
 https://www.dropbox.com/sh/ezo6ahj033cev8b/AADm-bC728rD0l9PTgPA9bgpa?dl=0
