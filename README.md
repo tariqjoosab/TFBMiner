@@ -26,6 +26,8 @@ py -m TFBMiner [-h] [-l L] [-s S] [-g G] [-o O] compound
 ## Installation
 These are beginner's instructions for using TFBMiner. 
 
+## Dependencies
+* Anaconda/miniconda
 download minicoda if you dont have it already
 https://docs.conda.io/en/latest/miniconda.html
 
@@ -101,12 +103,8 @@ py -m TFBMiner C00180 -s y -o /Users/user/Desktop/Results
 * Nothing specified for `-g`, so TFBMiner will default to using the user's home path to find the `genome_files` directory.
 * Predictions will be output to `/Users/user/Desktop/Results` (Mac OS X)
 
-## Dependencies
-* [numpy](https://numpy.org/) (version 1.21.5)
-* [pandas](https://pandas.pydata.org/) (version 1.3.5)
-* [tqdm](https://github.com/tqdm/tqdm) (version 4.62.3)
 
-## Setup
+## Setup - details
 To process identified enzymatic chains, TFBMiner needs access to complete and fully annotated [GenBank](https://www.ncbi.nlm.nih.gov/genbank/)  feature table genomes for all bacteria held on the [KEGG GENOME](https://www.genome.jp/kegg/genome/) database. These genomes can be downloaded from [this Dropbox folder](https://www.dropbox.com/sh/ezo6ahj033cev8b/AADm-bC728rD0l9PTgPA9bgpa?dl=0). Once downloaded, the (unzipped) folder can be placed within the user's home directory (`C:\Users\user` on Windows OS, for instance), which is where TFBMiner will default to searching within to find the folder; this is conducted in an OS-independent manner. Alternatively, one can place the folder within a different directory and specify its absolute path to TFBMiner via the `-g` command-line argument.
 
 While not necessary, one may wish to use up-to-date versions of the bacterial feature table genomes. If so, they can be downloaded from the [NCBI Assembly](https://www.ncbi.nlm.nih.gov/assembly) database in bulk. However, without advanced specification, this will also result in the acquisition of genomes that are not held on KEGG, and using more genomes than necessary may cause a slight performance deficit. To obtain only relevant genomes, one can paste the contents of `search_phrase.txt` into the advanced search builder of NCBI Assembly. These contents consist of each GenBank assembly code of bacteria on KEGG GENOME separated by the `OR` search operator, which therefore specifies to NCBI Assembly to only retrieve these genomes.
