@@ -23,6 +23,60 @@ py -m TFBMiner [-h] [-l L] [-s S] [-g G] [-o O] compound
 
 `-h, --help`: Display the software usage, description, options, and guidance in the terminal.
 
+## Installation
+These are beginner's instructions for using TFBMiner. 
+When using a terminal please type in everything after the '> ' sign. Instructions without a '> ' can be followed by going to websites and navigating files your normal file explorer/windows explorer/directory folder.
+
+download minicoda if you dont have it already
+https://docs.conda.io/en/latest/miniconda.html
+
+#Windows
+Open the Anaconda/miniconda prompt
+
+#Linux
+Open a terminal
+
+# Create a virtual environment using the command  (for this part it doesn't matter where you are in your file system)
+> conda create --name tfbMiner python=3.10
+If it asks if you want to proceed press y
+> y
+
+Activate the environment, you should see "(base)" on the left of the conda prompt be replaced with "(tfbMiner)". It this does not happen then software that you install could affect the result of your computer.
+> conda activate tfbMiner
+
+Install the requirements with the following commands 
+> conda install pip
+> conda install tqdm=4.62.3
+> conda install numpy=1.21.5
+> conda install pandas=1.5.2
+
+# Download the code/data
+Install the code by going to the github page and clicking Code, Download Zip. Unzip the zip-file in the directory that you want to work in
+https://github.com/UoMMIB/TFBMiner
+
+Download the data by going to the Dropbox page and clicking download. This contains a lot of files so make a folder called genome_files in the directory that you want to work in and extract the data into there.
+https://www.dropbox.com/sh/ezo6ahj033cev8b/AADm-bC728rD0l9PTgPA9bgpa?dl=0
+
+Make a results folder in the directory that you want to work in.
+
+Within the conda prompt you need to us the "cd" (change directory) command to get to the correct place within your file system.
+> cd (dont press enter yet!)
+Open a windows explorer and drag the TFBMiner-main file into the prompt, it should look like this
+(tfbMiner) C:\Users>cd C:\Users\ruths\workCode\TFBMiner-main (press enter)
+
+Double check that you are in the TFBMiner-main folder and the tfbMiner environment. The left of your terminal should look something like this:
+(tfbMiner) C:\Users\ruths\workCode\TFBMiner-main>
+
+#Run the code! 
+Use the -g flag to indictate the genome data and the -o file to indicate the results folder that you made
+> python -m TFBMiner C00259 -g C:\Users\ruths\workCode\TFBMiner-main\genome_files\ -o C:\Users\ruths\workCode\TFBMiner-main\results\
+
+#Trouble shooting
+It didn't work - make sure that you are in the correct location within your file system by checking the file path on the left of the Anaconda prompt. The last folder should be TFBMiner
+
+It returned 0 potential biosensors - this suggests that it couldn't find the genome_files. Did you put a slash at the end of your file paths? Double check the filepath provided and that you are running the code from the TFBMiner-main folder (see previous help point).
+
+
 ## Examples
 ```sh 
 py -m TFBMiner C00259 -l 3
@@ -71,7 +125,7 @@ TFBMiner initially receives the [KEGG COMPOUND](https://www.genome.jp/kegg/compo
 Each enzymatic chain is processed to identify putative transcriptional regulators of `C1` degradation. This begins by determining whether any genes that encode enzymes within the chain have genetic organisations that are characteristic of catabolic operons. The KEGG REST API is used to retrieve genes that encode each enzyme within the chain and the organisms that possess them, and the results are filtered to leave only organisms that possess all of the enzymes. For each organism, the software uses an internal database to identify the GenBank accession code of its genome, and then searches locally for a feature table genome that contains this accession code in its filename. The genome is then parsed, and the contents are used to predict operons that facilitate `C1` degradation by evaluating the genetic organisations of the relevant genes. If the genes are clustered on the same DNA strand, they are marked as an operon. Putative transcriptional regulators of the operons are predicted by identifying the nearest upstream transcription factor gene on the opposite DNA strand, as this is a highly frequent genetic organisation of TFBs. Each prediction is scored; regulators that are directly upstream of their operons receive the highest score (0), and points are deducted based upon linear distance from the operon and the strand orientations of the genes that are situated in-between. Predictions are ranked in order of their scores and output to `.csv` files.
 
 ## Author
-Tariq Joosab.
+Tariq Joosab & Ruth Stoney
 
 ## Acknowledgements
 Research supervisors: Dr Erik Hanko & Prof Rainer Breitling.
