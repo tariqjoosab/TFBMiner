@@ -60,6 +60,7 @@ Make a results folder in the directory that you want to work in.
 
 Within the conda prompt you need to us the "cd" (change directory) command to get to the correct place within your file system.
 > cd (dont press enter yet!)
+
 Open a windows explorer and drag the TFBMiner-main file into the prompt, it should look like this
 > (tfbMiner) C:\Users>cd C:\Users\ruths\workCode\TFBMiner-main (press enter)
 
