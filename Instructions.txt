@@ -1,9 +1,9 @@
 Instructions
 
 # These are beginner's instructions for using TFBMiner. 
-# When using a terminal please type in everything after the '> ' sign. Instructions without a '> ' can be followed by going to websites and natigating files your normal file explorer/windows explorer/directory folder.
+# When using a terminal please type in everything after the '> ' sign. Instructions without a '> ' can be followed by going to websites and navigating files your normal file explorer/windows explorer/directory folder.
 
-# download minicoda if you dont have it already
+# download minicoda if you don't have it already
 https://docs.conda.io/en/latest/miniconda.html
 
 # Windows
@@ -36,7 +36,7 @@ Open a terminal
 # Make a results folder in the directory that you want to work in.
 
 # Within the conda prompt you need to us the "cd" (change directory) command to get to the correct place within your file system.
-> cd (dont press enter yet!)
+> cd (don't press enter yet!)
 # Open a windows explorer and drag the TFBMiner-main file into the prompt, it should look like this
 (tfbMiner) C:\Users>cd C:\Users\ruths\workCode\TFBMiner-main (press enter)
 
