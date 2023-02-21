@@ -26,7 +26,7 @@ py -m TFBMiner [-h] [-l L] [-s S] [-g G] [-o O] compound
 ## Installation
 These are beginner's instructions for using TFBMiner. 
 
-## Dependencies
+### Dependencies
 * Anaconda/miniconda
 download minicoda if you dont have it already
 https://docs.conda.io/en/latest/miniconda.html
