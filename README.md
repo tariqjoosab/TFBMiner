@@ -3,7 +3,7 @@
 
 A data acquisition and analysis pipeline for the rapid identification of putative transcription factor-based biosensors.
 ## Synopsis
-TFBMiner predicts putative transcription factor-based biosensors (TFBs) for a compound of interest firstly by identifying enzymes that sequentially catabolize the compound and linking them to form chains. Each chain is then processed to identify whether the enzymes are encoded by any catabolic operons within bacterial genomes, and putative transcriptional regulators of the catabolic operons are predicted and scored based upon a conceptual model of how TFBs are frequently genetically organized. TFBMiner also has an option for predicting TFBs that regulate single genes, rather than genes encoding enzymatic chains.
+TFBMiner predicts putative transcription factor-based biosensors (TFBs) for a compound of interest firstly by identifying enzymes that sequentially metabolize the compound and linking them to form chains. Each chain is then processed to identify whether the enzymes are encoded by any metabolic  operons within bacterial genomes, and putative transcriptional regulators of the operons are predicted and scored based upon a conceptual model of how TFBs are frequently genetically organized. TFBMiner also has an option for predicting TFBs that regulate single genes, rather than genes encoding enzymatic chains.
 
 ## Usage
 ```sh
@@ -28,11 +28,11 @@ These are beginner's instructions for using TFBMiner.
 
 ### Dependencies
 * Anaconda/miniconda
-download minicoda if you dont have it already
+Download minicoda if it is not installed already
 https://docs.conda.io/en/latest/miniconda.html
 
 ### Windows
-Open the Anaconda/miniconda prompt
+Open the Anaconda/miniconda Prompt
 
 ### Linux
 Open a terminal
@@ -41,7 +41,7 @@ Open a terminal
 Create a virtual environment using the following command  (for this part it doesn't matter where you are in your file system). If it asks if you want to proceed press y.
 > conda create --name tfbMiner python=3.10
 
-Activate the environment, you should see "(base)" on the left of the conda prompt be replaced with "(tfbMiner)". It this does not happen then software that you install could affect the result of your computer.
+Activate the environment using the following command. You should see "(base)" on the left of the conda prompt be replaced with "(tfbMiner)". It this does not happen then software that you install could affect the rest of your computer.
 > conda activate tfbMiner
 
 Install the requirements with the following commands 
@@ -51,31 +51,31 @@ Install the requirements with the following commands
 > conda install pandas=1.5.2
 
 ### Download the code/data
-Install the code by going to the github page and clicking Code, Download Zip. Unzip the zip-file in the directory that you want to work in https://github.com/RuthStoney/TFBMiner - this will be changed to https://github.com/UoMMIB/TFBMiner ones everything's totally finalized
+Install the code by going to the github page and clicking Code, Download ZIP. Unzip the zip-file in the directory that you want to work in https://github.com/RuthStoney/TFBMiner - this will be changed to https://github.com/UoMMIB/TFBMiner ones everything's totally finalized
 
-Download the data by going to the Dropbox page and clicking download. This contains a lot of files so make a folder called genome_files in the directory that you want to work in and extract the data into there.
+Download the genome files by going to the Dropbox page and clicking download (2GB of space required). Make a folder called genome_files in the directory that you want to work in (e.g. C:\Users\ruth\TFBMiner\genome_files\) and extract the data into there.
 https://www.dropbox.com/sh/ezo6ahj033cev8b/AADm-bC728rD0l9PTgPA9bgpa?dl=0
 
 ### Final steps befor running the code
-Make a results folder in the directory that you want to work in.
+Make a results folder in the directory that you want to work in (e.g. C:\Users\ruth\TFBMiner\results\).
 
 Within the conda prompt you need to us the "cd" (change directory) command to get to the correct place within your file system.
 > cd (dont press enter yet!)
 
 Open a windows explorer and drag the TFBMiner-main file into the prompt, it should look like this
-> (tfbMiner) C:\Users>cd C:\Users\ruths\workCode\TFBMiner-main (press enter)
+> (tfbMiner) C:\Users>cd C:\Users\ruth\TFBMiner\TFBMiner-main (press enter)
 
 Double check that you are in the TFBMiner-main folder and the tfbMiner environment. The left of your terminal should look something like this:
-> (tfbMiner) C:\Users\ruths\workCode\TFBMiner-main>
+> (tfbMiner) C:\Users\ruth\TFBMiner\TFBMiner-main>
 
 ### Run the code! 
 Use the -g flag to indictate the genome data and the -o file to indicate the results folder that you made
-> python -m TFBMiner C00259 -g C:\Users\ruths\workCode\TFBMiner-main\genome_files\ -o C:\Users\ruths\workCode\TFBMiner-main\results\
+> python -m TFBMiner C00259 -g C:\Users\ruth\TFBMiner\TFBMiner-main\genome_files\ -o C:\Users\ruth\TFBMiner\TFBMiner-main\results\
 
 ### Trouble shooting
-It didn't work - make sure that you are in the correct location within your file system by checking the file path on the left of the Anaconda prompt. The last folder should be TFBMiner
+It didn't work - make sure that you are in the correct location within your file system by checking the file path on the left of the Anaconda prompt. The last folder should be TFBMiner.
 
-It returned 0 potential biosensors - this suggests that it couldn't find the genome_files. Did you put a slash at the end of your file paths? Double check the filepath provided and that you are running the code from the TFBMiner-main folder (see previous help point).
+It returned 0 potential biosensors - Either a biosensor does not exist, or it couldn't find the genome_files. Did you put a slash at the end of your file paths? Double check the filepath provided and that you are running the code from the TFBMiner-main folder (see previous help point).
 
 
 ## Examples
