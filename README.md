@@ -46,13 +46,10 @@ Activate the environment using the following command. You should see "(base)" on
 (tfbMiner) C:\Users\ruths>
 
 Install the requirements with the following commands 
-> conda install pip
-
-> conda install tqdm=4.62.3
-
-> conda install numpy=1.21.5
-
-> conda install pandas=1.5.2
+> conda install pip  
+conda install tqdm=4.62.3 
+conda install numpy=1.21.5  
+conda install pandas=1.5.2
 
 ### Download the code/data
 Install the code by going to the github page and clicking Code, Download ZIP. Unzip the zip-file in the directory that you want to work in https://github.com/RuthStoney/TFBMiner - this will be changed to https://github.com/UoMMIB/TFBMiner ones everything's totally finalized
