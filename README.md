@@ -43,7 +43,6 @@ Create a virtual environment using the following command  (for this part it does
 
 Activate the environment using the following command. You should see "(base)" on the left of the conda prompt be replaced with "(tfbMiner)", as shown below. If this does not happen then software that you install could affect the rest of your computer.
 > (base) C:\Users\ruths>conda activate tfbMiner
-
 > (tfbMiner) C:\Users\ruths>
 
 Install the requirements with the following commands 
