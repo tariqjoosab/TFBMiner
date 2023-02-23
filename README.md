@@ -41,8 +41,9 @@ Open a terminal
 Create a virtual environment using the following command  (for this part it doesn't matter where you are in your file system). If it asks if you want to proceed press y.
 > conda create --name tfbMiner python=3.10
 
-Activate the environment using the following command. You should see "(base)" on the left of the conda prompt be replaced with "(tfbMiner)". If this does not happen then software that you install could affect the rest of your computer.
-> conda activate tfbMiner
+Activate the environment using the following command. You should see "(base)" on the left of the conda prompt be replaced with "(tfbMiner)", as shown below. If this does not happen then software that you install could affect the rest of your computer.
+> (base) C:\Users\ruths>conda activate tfbMiner
+> (tfbMiner) C:\Users\ruths>
 
 Install the requirements with the following commands 
 > conda install pip
@@ -56,7 +57,7 @@ Install the code by going to the github page and clicking Code, Download ZIP. Un
 Download the genome files by going to the Dropbox page and clicking download (2GB of space required). Make a folder called genome_files in the directory that you want to work in (e.g. C:\Users\ruth\TFBMiner\genome_files\) and extract the data into there.
 https://www.dropbox.com/sh/ezo6ahj033cev8b/AADm-bC728rD0l9PTgPA9bgpa?dl=0
 
-### Final steps befor running the code
+### Final steps before running the code
 Make a results folder in the directory that you want to work in (e.g. C:\Users\ruth\TFBMiner\results\).
 
 Within the conda prompt you need to us the "cd" (change directory) command to get to the correct place within your file system.
